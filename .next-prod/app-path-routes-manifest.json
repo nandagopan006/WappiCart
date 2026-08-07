@@ -1,0 +1,12 @@
+{
+  "/icon.svg/route": "/icon.svg",
+  "/robots.txt/route": "/robots.txt",
+  "/sitemap.xml/route": "/sitemap.xml",
+  "/_not-found/page": "/_not-found",
+  "/opengraph-image/route": "/opengraph-image",
+  "/p/[slug]/opengraph-image/route": "/p/[slug]/opengraph-image",
+  "/page": "/",
+  "/p/[slug]/page": "/p/[slug]",
+  "/shop/page": "/shop",
+  "/about/page": "/about"
+}
