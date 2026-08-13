@@ -142,9 +142,21 @@ function validate(entries: ProductInput[]): Product[] {
 
 export const products: Product[] = validate(raw as ProductInput[]);
 
-/** The homepage's three. It is a shopfront window, not the catalogue. */
+/** The pairs the shop wants at the top of the homepage grid. */
 export function featuredProducts(): Product[] {
   return products.filter((p) => p.featured);
+}
+
+/**
+ * The pairs flagged `isNew`, for the homepage's first grid.
+ *
+ * Falls back to the front of the shelf when nothing is flagged — a "New in"
+ * band with an empty grid under it looks like a broken page, and the shelf
+ * order already puts the most recent pairs first.
+ */
+export function newProducts(limit = 4): Product[] {
+  const flagged = products.filter((p) => p.isNew);
+  return (flagged.length > 0 ? flagged : products).slice(0, limit);
 }
 
 /** How many pairs sit in each category, for the homepage's category list. */
@@ -183,6 +195,32 @@ export function pairsInStock(): number {
 export function sizesInStock(): number[] {
   const stocked = new Set(products.flatMap((p) => p.sizes));
   return SIZE_RUN.filter((size) => stocked.has(size));
+}
+
+/**
+ * The three price bands the /shop filter offers.
+ *
+ * The boundaries sit in the gaps of the current shelf rather than through the
+ * middle of it, so no band is a sliver. They live here beside SIZE_RUN and
+ * CATEGORIES because a price band is product knowledge, not a component's
+ * private business — and because the filter shows a live count beside each
+ * one, computed from the data, so a band that empties reads 00 rather than
+ * quietly lying.
+ */
+export const PRICE_BANDS = [
+  { id: "under-2000", label: "Under ₹2,000", min: 0, max: 1999 },
+  { id: "2000-3500", label: "₹2,000 – ₹3,500", min: 2000, max: 3500 },
+  { id: "over-3500", label: "Over ₹3,500", min: 3501, max: Number.POSITIVE_INFINITY },
+] as const;
+
+export type PriceBandId = (typeof PRICE_BANDS)[number]["id"];
+
+export function inPriceBand(product: Product, id: PriceBandId): boolean {
+  const band = PRICE_BANDS.find((b) => b.id === id);
+  /* An unknown id filters nothing rather than everything — a bad band should
+     never present the shopper with an empty shelf. */
+  if (!band) return true;
+  return product.price >= band.min && product.price <= band.max;
 }
 
 /** Categories that currently have at least one pair. */

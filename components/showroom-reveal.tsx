@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -40,29 +40,56 @@ import { EASE_SETTLE, prefersReducedMotion } from "@/lib/motion";
  *
  * `once: true` — a grid that re-reveals every time you scroll back up is a
  * light show, not a showroom.
+ *
+ * ── skip / onDone ────────────────────────────────────────────────────────
+ * `once: true` only holds for as long as the component stays mounted, which is
+ * not long enough on /shop: filtering and sorting re-render the whole grid, and
+ * a pair that has already been unveiled must not be unveiled again on its way
+ * to a new position. So the caller is given the two halves of that memory —
+ * `onDone` fires when a card has finished arriving, and `skip` renders it in
+ * its finished state without a timeline.
+ *
+ * Deliberately a prop rather than internal state: the DOM shape has to stay
+ * identical either way, because the catalogue's Framer Motion layout animation
+ * measures these nodes across the very re-render that flips the flag. Swapping
+ * the wrapper out instead would remount the card, and a remounted card reloads
+ * its photograph mid-morph.
  */
 export function ShowroomReveal({
   children,
   /** Position in its row. Multiplies the stagger. */
   index = 0,
+  /** Render the finished state immediately — this pair has already arrived. */
+  skip = false,
+  /** Fired once the card has finished arriving. */
+  onDone,
   className,
 }: {
   children: ReactNode;
   index?: number;
+  skip?: boolean;
+  onDone?: () => void;
   className?: string;
 }) {
   const maskRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  /* Held in a ref so a caller passing an inline arrow — which every caller
+     will — cannot re-run the timeline on every render. */
+  const onDoneRef = useRef(onDone);
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  }, [onDone]);
 
   useLayoutEffect(() => {
     const mask = maskRef.current;
     const card = cardRef.current;
     if (!mask || !card) return;
 
-    /* Reduced motion gets the finished state and nothing else. Both start
-       states live in CSS, so they have to be cleared here rather than simply
-       left un-animated. */
-    if (prefersReducedMotion()) {
+    /* Reduced motion, and anything already revealed, get the finished state and
+       nothing else. Both start states live in CSS, so they have to be cleared
+       here rather than simply left un-animated. */
+    if (skip || prefersReducedMotion()) {
       gsap.set([mask, card], { animation: "none" });
       gsap.set(mask, { clipPath: "none" });
       gsap.set(card, { opacity: 1, clearProps: "transform,filter" });
@@ -99,6 +126,7 @@ export function ShowroomReveal({
              — it would crop the wave that bleeds past each card's edge. */
           gsap.set(mask, { clipPath: "none" });
           gsap.set(card, { clearProps: "filter,transform,willChange" });
+          onDoneRef.current?.();
         },
       });
 
@@ -134,7 +162,7 @@ export function ShowroomReveal({
     }, mask);
 
     return () => ctx.revert();
-  }, [index]);
+  }, [index, skip]);
 
   return (
     <div ref={maskRef} data-showroom className={className}>

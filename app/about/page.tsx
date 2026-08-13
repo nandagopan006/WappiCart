@@ -3,8 +3,10 @@ import Image from "next/image";
 
 import { Magnetic } from "@/components/magnetic";
 import { Parallax } from "@/components/parallax";
+import { ProximityField } from "@/components/proximity-field";
 import { Rise } from "@/components/rise";
 import { ShowroomReveal } from "@/components/showroom-reveal";
+import { Spine } from "@/components/spine";
 import { SplitText } from "@/components/split-text";
 import { Wave } from "@/components/wave";
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
@@ -64,7 +66,11 @@ function PlateLabel({ index, children }: { index: string; children: string }) {
 
 export default function AboutPage() {
   return (
-    <article className="overflow-x-clip">
+    <article className="relative overflow-x-clip">
+      {/* The signature: a vertical wave that fills as the reader moves down,
+          a dot lighting at each plate. Desktop only — it lives in the gutter. */}
+      <Spine />
+
       {/* ── Opening statement ───────────────────────────────────────────
           Three lines, each a fact, each on its own line so the eye stops at
           every one. No image — the page earns the right to a photograph by
@@ -76,7 +82,7 @@ export default function AboutPage() {
           </p>
         </Rise>
 
-        <div className="@container mt-10 md:mt-14">
+        <ProximityField radius={320} lift={-16} swell={0.07} className="@container mt-10 md:mt-14">
           {["Twelve pairs.", "Chosen by two people.", "Sold one message at a time."].map(
             (line, i) => (
               <SplitText
@@ -90,7 +96,7 @@ export default function AboutPage() {
               </SplitText>
             ),
           )}
-        </div>
+        </ProximityField>
 
         <Wave className="mt-16 md:mt-20" />
       </section>
@@ -98,9 +104,18 @@ export default function AboutPage() {
       {/* ── 01 · The shop ───────────────────────────────────────────────
           Text left, photograph right, the photograph taller than its column
           so the row is never a tidy rectangle. */}
-      <section className="max-w-page mx-auto px-5 md:px-8">
+      <section data-plate className="max-w-page relative mx-auto px-5 md:px-8">
+        {/* The plate's numeral, set enormous behind it — the same watermark the
+            catalogue plates carry, so the two pages read as one publication. */}
+        <span
+          aria-hidden="true"
+          className="type-display text-espresso/[0.05] pointer-events-none absolute -top-[10%] -left-[2%] z-0 hidden leading-none text-[clamp(7rem,15vw,13rem)] select-none md:block"
+        >
+          01
+        </span>
+
         <ShowroomReveal>
-          <div className="grid items-center gap-10 md:grid-cols-12 md:gap-16">
+          <div className="relative z-10 grid items-center gap-10 md:grid-cols-12 md:gap-16">
             <div className="md:col-span-5">
               <PlateLabel index="01">The shop</PlateLabel>
               <SplitText
@@ -140,7 +155,7 @@ export default function AboutPage() {
           The dark passage. One line of type over a photograph, nothing else —
           the page needs somewhere the reader can stop, and a band of espresso
           between two blush sections is where the rhythm changes. */}
-      <section className="mt-section relative">
+      <section data-plate className="mt-section relative">
         <div className="relative min-h-[28rem] overflow-hidden md:min-h-[38rem]">
           <Parallax distance={60} className="absolute inset-0">
             <div className="absolute inset-0">
@@ -158,6 +173,9 @@ export default function AboutPage() {
             aria-hidden="true"
             className="from-espresso/85 via-espresso/50 absolute inset-0 bg-gradient-to-r to-transparent"
           />
+
+          {/* Light, not paint — the same glow the other dark passages carry. */}
+          <div aria-hidden="true" className="ember-glow -top-[50%] -right-[8%]" />
 
           <div className="max-w-page relative mx-auto flex min-h-[28rem] items-center px-5 py-20 md:min-h-[38rem] md:px-8">
             <div className="text-blush max-w-[34ch]">
@@ -184,9 +202,16 @@ export default function AboutPage() {
       {/* ── 03 · How it works ───────────────────────────────────────────
           Reversed: photograph left, text right. The image floats on hover
           rather than sitting in a frame. */}
-      <section className="max-w-page mt-section mx-auto px-5 md:px-8">
+      <section data-plate className="max-w-page mt-section relative mx-auto px-5 md:px-8">
+        <span
+          aria-hidden="true"
+          className="type-display text-espresso/[0.05] pointer-events-none absolute -top-[10%] -right-[2%] z-0 hidden leading-none text-[clamp(7rem,15vw,13rem)] select-none md:block"
+        >
+          03
+        </span>
+
         <ShowroomReveal>
-          <div className="grid items-center gap-10 md:grid-cols-12 md:gap-16">
+          <div className="relative z-10 grid items-center gap-10 md:grid-cols-12 md:gap-16">
             <div className="md:order-1 md:col-span-6">
               {/* Magnetic gives the photograph a slow lean toward the pointer —
                   the "floating" of a showcase object, reusing the wrapper the
@@ -232,7 +257,7 @@ export default function AboutPage() {
           The part of this page somebody actually came for. Set as an index —
           number, term, value, hairline — because a returns policy read as a
           specification is easier to trust than one read as a paragraph. */}
-      <section className="max-w-page mt-section mx-auto px-5 md:px-8">
+      <section data-plate className="max-w-page mt-section mx-auto px-5 md:px-8">
         <div className="flex items-end justify-between gap-6">
           <div>
             <PlateLabel index="04">The details</PlateLabel>
@@ -271,7 +296,7 @@ export default function AboutPage() {
           Ends where every page on this site ends: a conversation. The
           photograph carries it so the last thing on the page is a shoe, not a
           form. */}
-      <section className="mt-section relative overflow-hidden">
+      <section data-plate className="mt-section relative overflow-hidden">
         <div className="relative min-h-[26rem] md:min-h-[32rem]">
           <Parallax distance={50} className="absolute inset-0">
             <div className="absolute inset-0">
@@ -287,7 +312,9 @@ export default function AboutPage() {
 
           <div
             aria-hidden="true"
-            className="from-espresso/88 via-espresso/60 absolute inset-0 bg-gradient-to-t to-transparent"
+            /* via-40% holds the mid strength further up, because the plate label sits
+             well above the button and was landing on bare sand. */
+            className="from-espresso/88 via-espresso/65 absolute inset-0 bg-gradient-to-t via-40% to-transparent"
           />
 
           <div className="max-w-page relative mx-auto flex min-h-[26rem] items-end px-5 py-16 md:min-h-[32rem] md:px-8 md:py-20">

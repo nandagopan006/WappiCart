@@ -283,9 +283,9 @@ export function Hero({ featured }: { featured: Product }) {
   return (
     <section
       ref={rootRef}
-      /* Full screen less the announcement bar and header, so the plate ends
-         where the fold does rather than a hair past it. */
-      className="bg-espresso text-blush relative flex min-h-[calc(100svh-6.75rem)] items-end overflow-hidden"
+      /* Full screen less the header, so the plate ends where the fold does
+         rather than a hair past it. */
+      className="bg-espresso text-blush relative flex min-h-[calc(100svh-4.5rem)] items-end overflow-hidden"
       style={{ perspective: "1400px" }}
     >
       {/* The spotlight. A pool of warmth behind the whole plate — the one thing

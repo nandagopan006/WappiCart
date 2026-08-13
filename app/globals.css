@@ -3,705 +3,120 @@
 /* ─────────────────────────────────────────────────────────────
    WappiCart design tokens.
 
-   Every colour, size and easing on the site resolves to a value
-   in this file. If a component contains a hex code or a raw px
-   font-size, it is wrong — the two literals that genuinely cannot
-   read a token live in lib/palette.ts.
+   A plain white retail catalogue. The shoes are the only colour
+   on the page — everything around them is white, one grey, and
+   one hairline. If a component contains a hex code, it is wrong;
+   the two literals that genuinely cannot read a token live in
+   lib/palette.ts.
    ───────────────────────────────────────────────────────────── */
 
 @theme {
-  /* ── Colour · six values, no more ────────────────────────── */
-  --color-blush: #f5e4db; /* gradient start, top of page      */
-  --color-sand: #d9c0ad; /* gradient end, bottom of page      */
-  --color-espresso: #2a1f1a; /* all text, and the hero panel  */
-  --color-ember: #c2552f; /* glow only — see the rule below   */
-  --color-muted: #8c7565; /* secondary text, hairlines        */
+  /* ── Colour · five values, no more ───────────────────────── */
+  --color-paper: #ffffff; /* the page                          */
+  --color-mist: #f4f4f4; /* banner bands, image plates         */
+  --color-ink: #1a1a1a; /* headings, prices, buttons           */
+  --color-grey: #8a8a8a; /* product names, captions            */
+  --color-line: #e4e4e4; /* hairlines and rules                */
 
   /* The only green on the site: the 16px glyph inside the order
      button. Never a background, never a border. */
   --color-whatsapp: #1fa855;
 
-  /* ── Type · three roles ──────────────────────────────────── */
-  /* Fraunces is variable. Its WONK and opsz axes are not set by hand —
-     .type-display and .type-heading below carry them, so the "no Fraunces
-     below 24px, no WONK below 32px" rule cannot be broken by accident. */
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
-  --font-body: var(--font-manrope), system-ui, -apple-system, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
+  /* ── Type · one family, five sizes ───────────────────────── */
+  /* A single geometric sans does every job. A second display face
+     is what turns a catalogue into a magazine. */
+  --font-sans: var(--font-jost), system-ui, -apple-system, sans-serif;
 
-  /* Fluid between 360px and 1240px viewports, so a single token
-     covers the mobile and desktop ends of the scale. */
-  --text-display: clamp(2.5rem, 1.2727rem + 5.4545vw, 5.5rem); /* 40 → 88 */
-  --text-display--line-height: 0.92;
-  --text-display--letter-spacing: -0.02em;
+  /* Page and section headings. Small — a retail grid is led by the
+     product photographs, not by type. */
+  --text-title: clamp(1.25rem, 1.1364rem + 0.5045vw, 1.5rem); /* 20 → 24 */
+  --text-title--line-height: 1.25;
+  --text-title--letter-spacing: 0.02em;
 
-  --text-h2: clamp(1.75rem, 1.3409rem + 1.8182vw, 2.75rem); /* 28 → 44 */
-  --text-h2--line-height: 1.05;
-  --text-h2--letter-spacing: -0.02em;
+  /* The rule-flanked band over every grid: BEST SELLING, NEW IN. */
+  --text-section: 0.8125rem; /* 13 */
+  --text-section--line-height: 1.2;
+  --text-section--letter-spacing: 0.18em;
 
-  --text-body: clamp(1rem, 0.9744rem + 0.1136vw, 1.0625rem); /* 16 → 17 */
-  --text-body--line-height: 1.6;
+  --text-body: 0.9375rem; /* 15 */
+  --text-body--line-height: 1.65;
 
-  --text-utility: clamp(0.75rem, 0.7244rem + 0.1136vw, 0.8125rem); /* 12 → 13 */
-  --text-utility--line-height: 1.2;
-  --text-utility--letter-spacing: 0.08em;
+  /* The product name under every tile. */
+  --text-caption: 0.6875rem; /* 11 */
+  --text-caption--line-height: 1.45;
+  --text-caption--letter-spacing: 0.1em;
+
+  /* The price under every name. Never tracked — a tracked number is
+     hard to read at a glance, and the price is the one thing that
+     has to be. */
+  --text-price: 0.75rem; /* 12 */
+  --text-price--line-height: 1.4;
 
   /* ── Space · everything is a multiple of 4px ─────────────── */
-  --spacing-section: clamp(5rem, 3.4716rem + 6.8182vw, 8.75rem); /* 80 → 140 */
-  --container-page: 1240px;
+  --spacing-section: clamp(3.5rem, 2.8409rem + 2.9273vw, 5rem); /* 56 → 80 */
+  --container-page: 1400px;
 
   /* ── Motion ──────────────────────────────────────────────── */
-  /* The only easing on the site. Five moves, nothing over 900ms. */
+  /* One easing, and almost nothing uses it. */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
-
-  --animate-rise: rise 500ms var(--ease-settle) both;
-  --animate-mask-reveal: mask-reveal 700ms var(--ease-settle) both;
-
-  /* Move 2 — RISE. The only entrance on the site. */
-  @keyframes rise {
-    from {
-      opacity: 0;
-      transform: translateY(12px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  /* Move 3 — MASK REVEAL. The curved image mask opens from 92%.
-     Hero and product images only. */
-  @keyframes mask-reveal {
-    from {
-      opacity: 0;
-      transform: scale(0.92);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  /* Move 1 — WAVE DRAW. pathLength="1" on the <path> normalises the curve to
-     length 1, so the dash offset is a plain 1 → 0 with nothing measured in
-     JavaScript. */
-  @keyframes wave-draw {
-    from {
-      stroke-dashoffset: 1;
-    }
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-
-  /* Move 5 — AMBIENT. Deliberately the one exception to the no-looping rule,
-     because this line IS the brand mark.
-
-     Applied to the <svg>, never the <path>, so it cannot collide with the draw
-     above. On the hero's 96px-tall box a 1.04 scale moves the curve under 4px,
-     which is the whole budget the brief allows it. */
-  @keyframes wave-breathe {
-    from {
-      transform: scaleY(1);
-    }
-    to {
-      transform: scaleY(1.04);
-    }
-  }
-
-  /* The hero panel arriving: up 8px, 500ms, once. */
-  @keyframes panel-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
 }
 
 @layer components {
-  /* ── Type roles ──────────────────────────────────────────────
-     Fraunces' WONK axis gives the quirky curved letterforms that make
-     the headline memorable; below 32px the same forms read as a mistake.
-     So the axis is bound to the role, not left to the author.
-
-     wght is named explicitly alongside the other axes: when
-     font-variation-settings is present, leaving wght out invites the
-     font-weight property and the variation record to disagree. */
-  .type-display {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-variation-settings:
-      "wght" 400,
-      "opsz" 72,
-      "SOFT" 40,
-      "WONK" 1;
+  /* ── The section band ────────────────────────────────────────
+     A centred uppercase label with a hairline running out to both
+     margins. This is the only section divider on the site — it is
+     what separates one grid of shoes from the next. */
+  .rule-heading {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: 1.25rem;
   }
 
-  .type-heading {
-    font-family: var(--font-display);
-    font-weight: 600;
-    font-variation-settings:
-      "wght" 600,
-      "opsz" 24,
-      "SOFT" 20,
-      "WONK" 0;
-  }
-
-  /* ── Outline display type ────────────────────────────────────
-     The same face as .type-display, drawn as an edge rather than a mass.
-
-     This exists for one structural reason: it is legible over anything.
-     Solid espresso crossing a dark photograph turns to mush, which is why
-     every earlier attempt at a deep overlap had to be pulled back to a timid
-     twenty pixels. An outline reads on light and dark equally, because what
-     the eye follows is the contour, so the type can cross the image properly.
-
-     The stroke is set in `em` so it stays proportional as the clamp scales the
-     size — a fixed px stroke looks like a hairline at 9rem and like a slab at
-     2rem. */
-  .type-outline {
-    font-family: var(--font-display);
-    font-weight: 400;
-    font-variation-settings:
-      "wght" 400,
-      "opsz" 72,
-      "SOFT" 40,
-      "WONK" 1;
-    /* Solid on a phone. At 2rem the stroke works out sub-pixel and the
-       letters render as a broken smudge — an outline needs size to read as an
-       edge. It only becomes an outline where the type is big enough to carry
-       one, which is also the only place it has to cross the photograph. */
-    color: var(--color-espresso);
-  }
-
-  @media (min-width: 48rem) {
-    .type-outline {
-      color: transparent;
-      -webkit-text-stroke: 0.014em var(--color-espresso);
-    }
-  }
-
-  /* ── Ember · light, never paint ──────────────────────────────
-     Ember exists in exactly these two rules. No component names it, so
-     `bg-ember` and `fill-ember` cannot appear anywhere in the codebase.
-     Cream plus orange is the most common AI-generated palette there is;
-     using the rust as light rather than paint is what keeps this from
-     looking like every template on the internet. */
-
-  /* The glow inside the dark hero panel. A radial gradient rather than a
-     900px blur filter: the gradient has genuinely no edge to see, and
-     costs nothing to composite on a phone. */
-  .ember-glow {
-    position: absolute;
-    z-index: 0;
-    aspect-ratio: 1;
-    width: 900px;
-    max-width: 140%;
-    pointer-events: none;
-    background: radial-gradient(circle closest-side, var(--color-ember), transparent);
-    opacity: 0.25;
-  }
-
-  /* The active filter underline on /shop. Ember's only other appearance. */
-  .filter-underline {
-    background-color: var(--color-ember);
-  }
-
-  /* ── The wave ────────────────────────────────────────────────
-     Every line on the site draws itself once, left to right. */
-  .wave-path {
-    stroke-dasharray: 1;
-    animation: wave-draw 900ms var(--ease-settle) both;
-  }
-
-  /* The single ambient loop, and the four conditions it only runs under.
-
-     `pointer: fine` is doing the "desktop only" job: a phone gets a still
-     line, because a loop that runs while someone reads is the fastest way to
-     make a page feel restless, and phones pay for it in battery too.
-     data-visible is set by an IntersectionObserver in wave.tsx. */
-  @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
-    .wave-ambient[data-visible="true"] {
-      transform-origin: center;
-      /* Starts after the draw has finished, never during it. */
-      animation: wave-breathe 8s ease-in-out 900ms infinite alternate;
-    }
-  }
-
-  /* ── The hero panel ──────────────────────────────────────────
-     A dark panel floating in the blush gradient. The contrast between the two
-     is what gives the hero its impact — a dark hero on a dark site is just
-     dark. */
-  .hero-panel {
-    animation: panel-in 500ms var(--ease-settle) both;
-  }
-
-  /* ── The campaign plate ──────────────────────────────────────
-     The hero photograph bleeds off three edges. Its fourth is dissolved rather
-     than cut: the image fades out toward the left across a third of its width,
-     and downward at the very bottom so it settles into the stage instead of
-     stopping on a line.
-
-     This is doing the work a cut-out and a spotlight would do together. These
-     photographs have their own backgrounds, so a hard left edge would read as
-     a rectangle laid on a dark page; a dissolve reads as light falling away.
-     Mask, not opacity — the image stays fully opaque where it is visible, so
-     the shoe keeps its contrast. */
-  .hero-bleed {
-    -webkit-mask-image:
-      linear-gradient(to right, transparent, black 34%),
-      linear-gradient(to top, transparent, black 12%);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to right, transparent, black 34%),
-      linear-gradient(to top, transparent, black 12%);
-    mask-composite: intersect;
-    will-change: transform;
-  }
-
-  /* Guarantees the hero copy has something to sit on whatever the photograph
-     is doing behind it. Espresso rising from the bottom edge, gone by 55% —
-     strong enough to carry text on a phone, weak enough that it never reads as
-     a band across the image. */
-  .hero-scrim {
-    background: linear-gradient(
-      to top,
-      var(--color-espresso) 4%,
-      color-mix(in srgb, var(--color-espresso) 72%, transparent) 34%,
-      transparent 62%
-    );
-  }
-
-  /* The pool of warmth behind the plate. Blush at low opacity over espresso —
-     it is the only thing standing between "cinematic" and "a flat black
-     rectangle", and it has to be light rather than a colour, or the whole
-     screen tints. */
-  .hero-spotlight {
-    aspect-ratio: 1;
-    width: 130%;
-    max-width: 1100px;
-    background: radial-gradient(
-      circle closest-side,
-      color-mix(in srgb, var(--color-blush) 26%, transparent),
-      transparent
-    );
-  }
-
-  /* ── Studio light ────────────────────────────────────────────
-     A pool of blush sitting over the sand end of the page gradient, behind the
-     shoe. It reads as the room being lit from behind the subject, and it is
-     what stops the lower half of the hero going flat.
-
-     Deliberately not ember. Rust light on a cream page is the single most
-     common AI-generated palette there is, and the whole design system exists
-     to avoid landing there — so the lift is made of the palette's own lightest
-     value rather than an accent. */
-  .hero-light {
-    aspect-ratio: 1;
-    width: 120%;
-    max-width: 780px;
-    background: radial-gradient(circle closest-side, var(--color-blush), transparent);
-    opacity: 0.9;
-  }
-
-  /* The shoe photograph's right edge is a large convex curve — not a straight
-     edge, and not a circle. clipPathUnits="objectBoundingBox" in hero.tsx
-     keeps it responsive; a CSS `path()` would be locked to one pixel size. */
-  .hero-mask {
-    clip-path: url(#wappicart-shoe-mask);
-    /* A faint warm tint under the photograph. On a slow connection the shape
-       arrives first and fills with the shoe, instead of the panel showing a
-       dark hole where the hero image is going to be. */
-    background-color: color-mix(in srgb, var(--color-blush) 8%, transparent);
-  }
-
-  /* ── Move 4 · TIGHTEN ────────────────────────────────────────
-     A pair and the shadow where it meets the wave. Hover lifts the shoe
-     4px and tightens the shadow against the line — the physics of lifting
-     a shoe off a shelf, not a glow. */
-  .pair {
-    transition: transform 260ms var(--ease-settle);
-  }
-
-  .contact-shadow {
-    position: absolute;
-    inset-inline: 10%;
-    bottom: 0;
-    z-index: 0;
-    height: 10px;
-    border-radius: 50%;
-    background-color: color-mix(in srgb, var(--color-espresso) 18%, transparent);
-    filter: blur(7px);
-    transition:
-      transform 260ms var(--ease-settle),
-      opacity 260ms var(--ease-settle);
-  }
-
-  /* ── Plate depth ─────────────────────────────────────────────
-     A long, soft, warm shadow under the catalogue photographs — tinted with
-     espresso rather than black, because a grey shadow on a blush page reads as
-     dirt. Offset downward only: the page is lit from above, so nothing casts
-     sideways.
-
-     Two layers do the work of one: a wide diffuse pool for the weight, and a
-     tight contact shadow at the edge so the photograph looks placed on the
-     page rather than floating above it. */
-  .plate-media {
-    box-shadow:
-      0 2px 6px -2px color-mix(in srgb, var(--color-espresso) 16%, transparent),
-      0 44px 80px -36px color-mix(in srgb, var(--color-espresso) 34%, transparent);
-  }
-
-  /* ── The service ribbon ──────────────────────────────────────
-     A slow horizontal loop of four cards. */
-
-  /* Cards dissolve at both ends instead of hitting a hard edge — that single
-     detail is the difference between "a ribbon passing through" and "a row
-     being clipped". The mask is on the viewport, not the track, so it stays
-     put while the content moves under it. */
-  .marquee-mask {
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent,
-      black 7%,
-      black 93%,
-      transparent
-    );
-    mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent);
-  }
-
-  /* No surface at all — the claims sit directly on the page. Hover is the only
-     state, and it is a lift in weight rather than a box appearing: the item
-     warms from muted to espresso. Nothing moves, because the ribbon is already
-     moving and a hover that also translates would fight it. */
-  .ribbon-item {
-    transition: color 420ms var(--ease-settle);
-  }
-
-  @media (hover: hover) {
-    .ribbon-item:hover {
-      color: var(--color-espresso);
-    }
-  }
-
-  /* A wide, faint pool of blush behind the ribbon so the band sits slightly
-     forward of the page gradient rather than flat against it. */
-  .service-ribbon::before {
+  .rule-heading::before,
+  .rule-heading::after {
     content: "";
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      ellipse 70% 120% at 50% 50%,
-      color-mix(in srgb, var(--color-blush) 60%, transparent),
-      transparent 70%
-    );
+    height: 1px;
+    background-color: var(--color-line);
   }
 
-  /* The shelf photographs sit on a dark band, so their shadow has to come from
-     the other direction — a hairline of blush along the top edge reads as the
-     light catching them, where a dark shadow would simply disappear. */
-  .shelf-media {
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, var(--color-blush) 14%, transparent),
-      0 30px 60px -30px color-mix(in srgb, black 60%, transparent);
-  }
+  /* ── The product tile ────────────────────────────────────────
+     No card, no border, no shadow. The photograph sits on its own
+     pale plate and the caption sits under it, centred.
 
-  /* The photograph inside a card frame. Scaling this rather than the card
-     itself means the frame stays put and the shoe grows into it, which reads
-     as the shoe coming forward instead of the whole tile inflating. */
-  .card-media {
-    transition: transform 620ms var(--ease-settle);
+     Hover is a single move: the shoe grows very slightly inside a
+     frame that does not move. Nothing lifts, nothing glows. */
+  .tile-media {
+    transition: transform 500ms var(--ease-settle);
     will-change: transform;
   }
 
-  /* Pointer devices only. A phone has no hover, and a hover state that sticks
-     after a tap is worse than no hover state at all. */
   @media (hover: hover) {
-    .group:hover .pair {
-      transform: translateY(-4px);
+    .group:hover .tile-media {
+      transform: scale(1.04);
     }
-
-    .group:hover .card-media {
-      transform: scale(1.045);
-    }
-
-    .group:hover .contact-shadow {
-      transform: scaleX(0.86) scaleY(0.7);
-      opacity: 0.7;
-    }
-  }
-
-  /* ── The header ──────────────────────────────────────────────
-     Two custom properties, written by one ScrollTrigger in site-header.tsx.
-     The browser interpolates them; React never re-renders on scroll. */
-  .site-header {
-    --header-pad: 1rem;
-    --header-solid: 0;
-    padding-block: var(--header-pad);
-    background-color: color-mix(
-      in srgb,
-      var(--color-blush) calc(80% + var(--header-solid) * 14%),
-      transparent
-    );
-    border-color: color-mix(
-      in srgb,
-      var(--color-muted) calc(12% + var(--header-solid) * 16%),
-      transparent
-    );
-    box-shadow: 0 1px 24px
-      color-mix(in srgb, var(--color-espresso) calc(var(--header-solid) * 7%), transparent);
-  }
-
-  .site-wordmark {
-    font-size: calc(1.5rem - var(--header-solid, 0) * 0.2rem);
-    transition: font-size 120ms linear;
   }
 
   /* ── Links ───────────────────────────────────────────────────
-     An underline that grows from the left rather than switching on. Uses a
-     background gradient, not a border, so it never affects layout. */
-  .link-underline {
-    position: relative;
-    background-image: linear-gradient(currentColor, currentColor);
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    background-size: 0% 1px;
+     A plain underline that appears on hover. No growth animation,
+     no gradient trick — this is a shop, not a portfolio. */
+  .link-quiet {
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 4px;
     transition:
-      background-size 320ms var(--ease-settle),
-      color 260ms var(--ease-settle),
-      letter-spacing 320ms var(--ease-settle);
+      color 200ms var(--ease-settle),
+      text-decoration-color 200ms var(--ease-settle);
   }
 
   @media (hover: hover) {
-    .link-underline:hover {
-      background-size: 100% 1px;
+    .link-quiet:hover {
+      text-decoration-color: currentColor;
     }
   }
 
-  .link-underline:focus-visible {
-    background-size: 100% 1px;
-  }
-
-  /* ── The hero shoe ───────────────────────────────────────────
-     preserve-3d and a backface hint keep the cursor tilt from flattening or
-     shimmering at the edges of the rotation. */
-  .hero-shoe {
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    will-change: transform;
-    /* drop-shadow, not box-shadow: the photograph is clipped to a curve, and a
-       box-shadow would be cast by the rectangle the clip removed. This follows
-       the actual silhouette. Down and slightly right, because the page is lit
-       from above-left. */
-    filter: drop-shadow(0 30px 46px color-mix(in srgb, var(--color-espresso) 22%, transparent));
-  }
-
-  @media (hover: hover) {
-    .hero-shoe {
-      transition: filter 420ms var(--ease-settle);
-    }
-
-    .hero-shoe:hover {
-      /* Deeper and softer than the resting shadow, not a glow — the shoe has
-         risen further off the page, so its shadow spreads and drops. */
-      filter: drop-shadow(0 44px 64px color-mix(in srgb, var(--color-espresso) 28%, transparent));
-    }
-  }
-
-  /* ── Atmosphere ──────────────────────────────────────────────
-     Three fixed layers, mounted only on pointer:fine without a reduced-motion
-     request (see atmosphere.tsx). Every one animates on transform or opacity
-     alone, so none of them touch layout or paint after the first frame. */
-
-  /* Grain: one inline SVG turbulence tile, moved a few pixels per step. */
-  .atmosphere-grain {
-    position: absolute;
-    /* Oversized so the translation never exposes an edge. */
-    inset: -150%;
-    opacity: 0.32;
-    mix-blend-mode: multiply;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
-    animation: grain-drift 7s steps(6) infinite;
-  }
-
-  /* One slow warmth crossing the page. Ember at 6% — light, never paint. */
-  .atmosphere-light {
-    position: absolute;
-    top: -30%;
-    left: -20%;
-    width: 70vw;
-    aspect-ratio: 1;
-    background: radial-gradient(circle closest-side, var(--color-ember), transparent);
-    opacity: 0.06;
-    animation: light-drift 46s var(--ease-settle) infinite alternate;
-  }
-
-  /* Pulls the corners down so the centre of the page reads as lit. */
-  .atmosphere-vignette {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      ellipse 120% 85% at 50% 45%,
-      transparent 55%,
-      color-mix(in srgb, var(--color-espresso) 13%, transparent) 100%
-    );
-  }
-
-  @keyframes grain-drift {
-    0% {
-      transform: translate(0, 0);
-    }
-    20% {
-      transform: translate(-4%, 3%);
-    }
-    40% {
-      transform: translate(3%, -4%);
-    }
-    60% {
-      transform: translate(-3%, -3%);
-    }
-    80% {
-      transform: translate(4%, 2%);
-    }
-    100% {
-      transform: translate(0, 0);
-    }
-  }
-
-  @keyframes light-drift {
-    from {
-      transform: translate3d(0, 0, 0);
-    }
-    to {
-      transform: translate3d(58vw, 26vh, 0);
-    }
-  }
-
-
-  /* ── The loader ──────────────────────────────────────────────
-     The failsafe is the point: if the bundle never arrives or GSAP throws,
-     this animation still lifts the curtain and returns the page. It runs
-     regardless of script, and GSAP normally finishes long before it. */
-  .site-loader {
-    animation: loader-failsafe 400ms var(--ease-settle) 2.4s forwards;
-  }
-
-  @keyframes loader-failsafe {
-    to {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-  }
-
-  /* Nothing scrolls behind the curtain — but the lock has to be able to
-     release itself. The class is removed by React and by the loader's
-     backstop; if both somehow fail, this animation restores scrolling anyway.
-     `overflow` is not interpolatable, so it flips discretely at the end of a
-     zero-length animation held by `forwards`. A page that cannot scroll is
-     indistinguishable from a broken site. */
-  .is-loading body {
-    overflow: hidden;
-    animation: scroll-unlock 0s linear 3.2s forwards;
-  }
-
-  @keyframes scroll-unlock {
-    to {
-      overflow: visible;
-    }
-  }
-
-  /* ── Entrance start states ───────────────────────────────────
-     Anything GSAP animates in has to START hidden in CSS, not be hidden by
-     GSAP after hydration. Otherwise the server HTML paints the element
-     visible, the bundle arrives, GSAP snaps it to opacity 0, and the visitor
-     watches it blink out and back in — worst on exactly the slow connections
-     that can least afford it.
-
-     Behind `.js` so a scriptless visitor is never shown a blank page, and
-     carrying a failsafe animation so a visitor whose bundle fails *after* the
-     inline script ran still gets the content back a moment later. GSAP writes
-     inline styles, which beat these, and finishes long before 3s. */
-  .js [data-anim] {
-    opacity: 0;
-    animation: anim-failsafe 400ms var(--ease-settle) 3s forwards;
-  }
-
-  /* ── Split-text reveal ───────────────────────────────────────
-     Each glyph sits below its own mask and slides up into it.
-
-     This is a CSS transition rather than a GSAP tween on purpose. A tween
-     using `yPercent` against these masked inline-blocks would create its
-     `from` state and then never advance — reproducibly, while sibling tweens
-     in the very same timeline completed. Rather than ship an effect I could
-     not explain, the reveal is expressed in the language that demonstrably
-     works here. The stagger is an inline transition-delay written per glyph,
-     so the cascade is identical and there is nothing to schedule.
-
-     The failsafe stays armed: its end state is exactly where the transition
-     lands, so the worst it can do is finish the job early. */
-  .js [data-glyph] {
-    transform: translateY(115%);
-    transition: transform 900ms var(--ease-settle);
-    animation: glyph-failsafe 400ms var(--ease-settle) 3s forwards;
-  }
-
-  .js [data-split-revealed="true"] [data-glyph] {
-    transform: none;
-  }
-
-  /* The product reveal's two start states, same contract as above: hidden in
-     CSS so GSAP never has to hide anything after hydration, and released by a
-     failsafe if the bundle dies. A blank product grid is the worst thing this
-     pattern could fail into, so it fails open. */
-  .js [data-showroom] {
-    clip-path: inset(100% 0% 0% 0%);
-    animation: showroom-mask-failsafe 400ms var(--ease-settle) 3s forwards;
-  }
-
-  .js [data-showroom-card] {
-    opacity: 0;
-    animation: anim-failsafe 400ms var(--ease-settle) 3s forwards;
-  }
-
-  @keyframes showroom-mask-failsafe {
-    to {
-      clip-path: inset(0% 0% 0% 0%);
-    }
-  }
-
-  @keyframes anim-failsafe {
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @keyframes glyph-failsafe {
-    to {
-      transform: none;
-    }
-  }
-
-  /* ── Move 2 · RISE, on scroll ────────────────────────────────
-     Only hidden when JavaScript is present to reveal it again — without
-     the html.js guard, a failed bundle leaves an empty catalogue. */
-  .js .reveal {
-    opacity: 0;
-    transform: translateY(12px);
-    transition:
-      opacity 500ms var(--ease-settle),
-      transform 500ms var(--ease-settle);
-  }
-
-  .js .reveal[data-shown="true"] {
-    opacity: 1;
-    transform: none;
+  .link-quiet:focus-visible {
+    text-decoration-color: currentColor;
   }
 }
 
@@ -713,28 +128,14 @@
 
   html {
     -webkit-text-size-adjust: 100%;
-    /* Anchor jumps ease natively on phones, where Lenis is switched off. */
     scroll-behavior: smooth;
   }
 
-  /* Lenis sets this class on <html> when it is running. Native smooth scrolling
-     and a scroll smoother fight each other over the same anchor jump, so the
-     native one stands down while Lenis is in charge. */
-  html.lenis {
-    scroll-behavior: auto;
-  }
-
   body {
-    /* The site is a warm blush-to-tan gradient; the hero is a dark panel
-       floating inside it. Fixed, so the gradient belongs to the window
-       rather than sliding away under the content. */
     min-height: 100svh;
-    background-color: var(--color-blush);
-    background-image: linear-gradient(160deg, var(--color-blush) 0%, var(--color-sand) 100%);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    color: var(--color-espresso);
-    font-family: var(--font-body);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
     -webkit-font-smoothing: antialiased;
@@ -742,78 +143,27 @@
   }
 
   ::selection {
-    background-color: var(--color-espresso);
-    color: var(--color-blush);
+    background-color: var(--color-ink);
+    color: var(--color-paper);
   }
 
   /* Every interactive element shows where you are. */
   :focus-visible {
-    outline: 2px solid var(--color-espresso);
+    outline: 2px solid var(--color-ink);
     outline-offset: 3px;
   }
 
-  /* Motion is a garnish, never the meal. Components check
-     prefersReducedMotion() and return static values; this is the safety net
-     under them. */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
-    }
-
-    /* The atmosphere, cursor and loader are not mounted at all under reduced
-       motion — but if any of them ever reach the DOM, they stop here. */
-    .atmosphere-grain,
-    .atmosphere-light {
-      animation: none !important;
-    }
-
-
-    .site-loader {
-      display: none !important;
-    }
-
-    /* Entrance start states must be undone, not just frozen.
-       Components check prefersReducedMotion() and skip their intro timeline
-       entirely — so nothing would ever animate `[data-anim]` back to opacity 1,
-       and the hero would sit blank until the 3s failsafe. A reduced-motion
-       visitor gets the finished layout immediately, which is the whole
-       promise. */
-    .js [data-anim] {
-      opacity: 1 !important;
-      transform: none !important;
-      animation: none !important;
-    }
-
-    .js [data-glyph] {
-      transform: none !important;
-      animation: none !important;
-    }
-
-    .js [data-showroom] {
-      clip-path: none !important;
-      animation: none !important;
-    }
-
-    .js [data-showroom-card] {
-      opacity: 1 !important;
-      transform: none !important;
-      filter: none !important;
-      animation: none !important;
     }
 
     *,
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
-      /* Without this the staggered headline still arrives late, one word at a
-         time, which is the effect the shopper asked us to switch off. */
-      animation-delay: 0ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
-      /* The scroll reveal staggers with transition-delay. Without this, a
-         reduced-motion shopper still watches rows arrive one after another —
-         the delay outlives the duration it was pacing. */
-      transition-delay: 0ms !important;
       scroll-behavior: auto !important;
     }
   }
