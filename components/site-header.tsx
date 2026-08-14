@@ -48,8 +48,13 @@ export function SiteHeader() {
         </div>
 
         {/* Row two — the shelves. A horizontal rule above them, so the two rows
-            read as one bar rather than two stacked ones. */}
-        <nav className="border-line text-caption flex items-center justify-center gap-6 border-t py-3 uppercase sm:gap-9">
+            read as one bar rather than two stacked ones.
+
+            Desktop only. On a phone the bottom bar is the navigation, and two
+            sets of controls on one screen is one set too many. The shelves are
+            still one tap away there: the bottom bar's Shop opens /shop, which
+            carries the same five names in its own filter row. */}
+        <nav className="border-line text-caption hidden items-center justify-center gap-6 border-t py-3 uppercase sm:gap-9 md:flex">
           <Link href="/shop" className="link-quiet text-grey hover:text-ink">
             All
           </Link>
