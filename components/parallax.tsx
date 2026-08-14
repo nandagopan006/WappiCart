@@ -1,74 +1,95 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { canAnimateRich } from "@/lib/motion";
+import { cx } from "@/lib/cx";
+import {
+  EASE_SCRUB,
+  isCompactViewport,
+  prefersReducedMotion,
+  registerScrollTrigger,
+  travelScale,
+  useIsomorphicLayoutEffect,
+} from "@/lib/motion";
 
 /**
- * An image that drifts inside its own frame as the page scrolls.
+ * The PARALLAX preset. The element drifts against the scroll, scrubbed, so a
+ * page of flat rectangles gains depth.
  *
- * The child is scaled up slightly and then translated by less than the
- * overflow that scaling created, so the frame is never uncovered at either end
- * of the travel. That is the whole trick: parallax inside a fixed frame is a
- * cropping problem before it is an animation problem, and the usual mistake is
- * a gap appearing at the top of the image on a long page.
+ * ── Keep it small ────────────────────────────────────────────────────────
+ * `distance` is the total travel across the whole time the element is on
+ * screen, and the useful range is roughly 20–80px. Past that it stops reading
+ * as depth and starts reading as a element that has come loose. The default
+ * is deliberately timid.
  *
- * `ease: "none"` because the position is scrubbed against scroll — an eased
- * scrub means the image moves at a different rate than the finger doing the
- * scrolling, which reads as lag rather than depth.
+ * ── Where it goes ────────────────────────────────────────────────────────
+ * On the inner layer, never the frame. A parallax on a card moves the card out
+ * of the grid; a parallax on the photograph *inside* a card with
+ * `overflow-hidden` moves the picture within its frame, which is the effect
+ * that actually looks like depth. Give the element more height than its frame
+ * so the drift never exposes an edge.
  *
- * Desktop only. On a phone this is a repaint on every scroll frame in exchange
- * for a few pixels of movement nobody asked for.
+ * `scrub: 0.5` rather than `true` — half a second of catch-up smooths the
+ * coarse steps a mouse wheel produces without the element feeling detached
+ * from the finger.
  */
 export function Parallax({
   children,
-  /** Pixels of travel across the whole scroll of this element. */
   distance = 40,
+  direction = "up",
+  scrub = 0.5,
+  disableOnMobile = false,
   className,
 }: {
   children: ReactNode;
+  /** Total travel in px. Scaled down on small screens. */
   distance?: number;
+  /** "up" moves against the scroll — the usual choice for a background. */
+  direction?: "up" | "down";
+  /** Seconds of catch-up. `true` locks it to the scrollbar exactly. */
+  scrub?: number | boolean;
+  /** Switch the effect off entirely below 768px rather than just scaling it. */
+  disableOnMobile?: boolean;
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const node = ref.current;
-    if (!node || !canAnimateRich()) return;
+    if (!node) return;
+    if (prefersReducedMotion()) return;
+    if (disableOnMobile && isCompactViewport()) return;
 
-    gsap.registerPlugin(ScrollTrigger);
+    const ScrollTrigger = registerScrollTrigger();
 
     const ctx = gsap.context(() => {
-      const inner = node.firstElementChild;
-      if (!inner) return;
+      const travel = distance * travelScale() * (direction === "up" ? -1 : 1);
 
-      /* Cover the travel plus a margin, so no edge is ever exposed. */
-      const overscan = 1 + (distance * 2) / node.offsetHeight;
-
-      gsap.set(inner, { scale: overscan, willChange: "transform" });
       gsap.fromTo(
-        inner,
-        { y: -distance },
+        node,
+        { y: -travel / 2 },
         {
-          y: distance,
-          ease: "none",
+          y: travel / 2,
+          ease: EASE_SCRUB,
           scrollTrigger: {
             trigger: node,
+            /* Bottom-of-viewport to top-of-viewport: the element is animated
+               across exactly the span it is visible for, so it is at its
+               resting position when it is centred. */
             start: "top bottom",
             end: "bottom top",
-            scrub: 0.5,
+            scrub,
           },
         },
       );
     }, node);
 
     return () => ctx.revert();
-  }, [distance]);
+  }, [distance, direction, scrub, disableOnMobile]);
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={cx("will-change-transform", className)}>
       {children}
     </div>
   );

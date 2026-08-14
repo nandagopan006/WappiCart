@@ -1,55 +1,56 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { Parallax } from "@/components/parallax";
 import { Price } from "@/components/price";
-import { Wave } from "@/components/wave";
 import type { Product } from "@/lib/products";
 
 /**
- * Image, name, price. Nothing else — no badges, no sale flags, no star ratings
- * we do not have data for.
+ * One pair in the grid. Photograph, name, price. Nothing else.
  *
- * The photograph sits flush on the line. No card background, no border box, no
- * drop shadow — the line is the only structure.
+ * No card, no border, no shadow, no badges, no star ratings we have no data
+ * for. The photograph sits on a pale square plate and the caption sits under
+ * it, centred — the layout a shoe shop's own catalogue uses, because a dense
+ * grid is read by scanning photographs, not by reading labels.
  *
- * Every photograph is cropped to 4:3 rather than shown at its own ratio. A grid
- * of shoes photographed by different people is a grid of different shapes, and
- * the eye reads that as clutter before it reads any of the shoes.
+ * ── One ratio, everywhere ────────────────────────────────────────────────
+ * Every photograph is cropped square. A grid of shoes photographed by
+ * different people is a grid of different shapes, and the eye reads that as
+ * clutter before it reads any of the shoes.
  *
- * ── Motion ───────────────────────────────────────────────────────────────
- * The image drifts inside its frame as the page scrolls, so a grid of cards
- * has depth rather than being one flat sheet moving past. On hover it eases up
- * to fill more of the frame while the whole card lifts — the shoe comes toward
- * you and the card comes off the shelf, which is one gesture read two ways.
+ * ── The caption ──────────────────────────────────────────────────────────
+ * Name left, price right, both on one baseline and both ink — so the row
+ * has two anchors at the photograph's own edges rather than a centred stack
+ * floating under it. The colour sits below in grey, which is what tells two
+ * loafers apart at this size.
  */
-export function ProductCard({ product, priority = false }: { product: Product; priority?: boolean }) {
+export function ProductCard({
+  product,
+  priority = false,
+}: {
+  product: Product;
+  priority?: boolean;
+}) {
   return (
-    <Link href={`/p/${product.slug}`} className="group block focus-visible:outline-offset-8">
-      <Parallax distance={14} className="relative aspect-4/3 overflow-hidden">
-        <div className="card-media absolute inset-0">
-          <Image
-            src={product.image}
-            alt={product.alt}
-            fill
-            priority={priority}
-            sizes="(min-width: 768px) 33vw, 50vw"
-            className="pair object-cover"
-          />
-        </div>
-      </Parallax>
-
-      <Wave className="-mx-3 h-2 md:-mx-5" />
-
-      <div className="pt-3 md:pt-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="text-body font-medium">{product.name}</h3>
-          {product.isNew ? (
-            <span className="font-mono text-utility text-muted shrink-0 uppercase">New</span>
-          ) : null}
-        </div>
-        <Price price={product.price} mrp={product.mrp} className="mt-1 block" />
+    <Link href={`/p/${product.slug}`} className="group block focus-visible:outline-offset-4">
+      <div className="bg-mist relative aspect-square overflow-hidden">
+        <Image
+          src={product.image}
+          alt={product.alt}
+          fill
+          priority={priority}
+          sizes="(min-width: 1400px) 450px, (min-width: 640px) 33vw, 50vw"
+          className="tile-media object-cover"
+        />
       </div>
+
+      {/* Name and price on one baseline, pinned to opposite edges. Centring
+          them was what made a grid of twelve read as a template — a caption
+          aligned to the photograph's own edge reads as a catalogue entry. */}
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <h3 className="text-caption text-ink truncate uppercase">{product.name}</h3>
+        <Price price={product.price} mrp={product.mrp} className="shrink-0 tabular-nums" />
+      </div>
+      <p className="text-caption text-grey mt-1 uppercase">{product.colour}</p>
     </Link>
   );
 }

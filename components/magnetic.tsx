@@ -1,86 +1,81 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import gsap from "gsap";
 
-import { canAnimateRich, DURATION, EASE_SETTLE } from "@/lib/motion";
+import { cx } from "@/lib/cx";
+import {
+  hasFinePointer,
+  prefersReducedMotion,
+  useIsomorphicLayoutEffect,
+} from "@/lib/motion";
 
 /**
- * A button that leans toward the cursor.
+ * The MAGNETIC preset. The element leans a few pixels toward the cursor while
+ * the pointer is over it, and settles back when it leaves.
  *
- * The element follows the pointer by a fraction of the distance from its own
- * centre, capped so it never detaches from where it actually is. The label
- * inside moves slightly further than the button, which is what sells it as a
- * physical object with a surface rather than a div being translated.
+ * ── Why quickTo and not a tween per event ────────────────────────────────
+ * `pointermove` fires far more often than the screen refreshes. Creating a
+ * tween per event means dozens of overlapping tweens fighting for the same
+ * property, which is both janky and expensive. `gsap.quickTo` builds the tween
+ * once and then only writes a new target value — it is the difference between
+ * this being free and this being the reason the page drops frames.
  *
- * The tween writes to a quickTo instance rather than creating a new tween per
- * mousemove — mousemove fires far more often than 60Hz on a high-polling
- * mouse, and a fresh tween per event is how a magnetic button ends up costing
- * more frames than everything else on the page combined.
+ * No React state is involved. A `useState` here would re-render the subtree on
+ * every mouse move.
  *
- * Pointer devices only, and never under reduced motion. On a phone this is
- * dead weight, so the wrapper renders its child and nothing else.
+ * ── Where it belongs ─────────────────────────────────────────────────────
+ * On the one or two things a section is asking you to press. A page where
+ * everything leans toward the cursor is a page where nothing stands out, and
+ * on a link the effect competes with the browser's own hit target.
+ *
+ * Desktop only, and off under reduced motion — a touch device gets a plain
+ * wrapper with no listeners attached at all.
  */
 export function Magnetic({
   children,
-  /** How far the element may travel from rest, in px. */
-  strength = 14,
+  strength = 12,
   className,
 }: {
   children: ReactNode;
+  /** Maximum lean in px at the edge of the element. Keep it under ~16. */
   strength?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const node = ref.current;
-    if (!node || !canAnimateRich()) return;
-
-    const label = node.querySelector<HTMLElement>("[data-magnetic-label]") ?? node.firstElementChild;
+    if (!node) return;
+    if (prefersReducedMotion() || !hasFinePointer()) return;
 
     const ctx = gsap.context(() => {
-      const moveX = gsap.quickTo(node, "x", { duration: 0.5, ease: EASE_SETTLE });
-      const moveY = gsap.quickTo(node, "y", { duration: 0.5, ease: EASE_SETTLE });
-      const labelX = label ? gsap.quickTo(label, "x", { duration: 0.6, ease: EASE_SETTLE }) : null;
-      const labelY = label ? gsap.quickTo(label, "y", { duration: 0.6, ease: EASE_SETTLE }) : null;
+      const moveX = gsap.quickTo(node, "x", { duration: 0.4, ease: "power3.out" });
+      const moveY = gsap.quickTo(node, "y", { duration: 0.4, ease: "power3.out" });
 
       const onMove = (event: PointerEvent) => {
         const box = node.getBoundingClientRect();
-        /* -1..1 from the centre, then clamped so a fast flick past the corner
-           cannot throw the element further than `strength`. */
-        const relX = gsap.utils.clamp(-1, 1, (event.clientX - (box.left + box.width / 2)) / (box.width / 2));
-        const relY = gsap.utils.clamp(-1, 1, (event.clientY - (box.top + box.height / 2)) / (box.height / 2));
+        /* Offset from the element's centre, normalised to -1..1, so the lean
+           is proportional to how far off-centre the cursor is rather than to
+           the element's size. */
+        const dx = (event.clientX - (box.left + box.width / 2)) / (box.width / 2);
+        const dy = (event.clientY - (box.top + box.height / 2)) / (box.height / 2);
 
-        moveX(relX * strength);
-        moveY(relY * strength);
-        labelX?.(relX * strength * 0.35);
-        labelY?.(relY * strength * 0.35);
+        moveX(dx * strength);
+        moveY(dy * strength);
       };
 
       const onLeave = () => {
         moveX(0);
         moveY(0);
-        labelX?.(0);
-        labelY?.(0);
       };
-
-      /* A press dips the surface; releasing lets it spring back. */
-      const onDown = () => gsap.to(node, { scale: 0.96, duration: DURATION.quick, ease: EASE_SETTLE });
-      const onUp = () => gsap.to(node, { scale: 1, duration: 0.55, ease: "elastic.out(1, 0.5)" });
 
       node.addEventListener("pointermove", onMove);
       node.addEventListener("pointerleave", onLeave);
-      node.addEventListener("pointerdown", onDown);
-      node.addEventListener("pointerup", onUp);
-      node.addEventListener("pointercancel", onUp);
 
       return () => {
         node.removeEventListener("pointermove", onMove);
         node.removeEventListener("pointerleave", onLeave);
-        node.removeEventListener("pointerdown", onDown);
-        node.removeEventListener("pointerup", onUp);
-        node.removeEventListener("pointercancel", onUp);
       };
     }, node);
 
@@ -88,8 +83,8 @@ export function Magnetic({
   }, [strength]);
 
   return (
-    <span ref={ref} className={className} style={{ display: "inline-block", willChange: "transform" }}>
+    <div ref={ref} className={cx("inline-block will-change-transform", className)}>
       {children}
-    </span>
+    </div>
   );
 }

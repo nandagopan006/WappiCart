@@ -18,7 +18,7 @@ export function generateStaticParams() {
 
 /* This renders to a PNG outside the browser, so it cannot read a CSS token.
    lib/palette.ts is the one module allowed to hold the literals. */
-const { blush, espresso, muted } = palette;
+const { paper, ink, grey, line } = palette;
 
 export default async function OpengraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -33,18 +33,18 @@ export default async function OpengraphImage({ params }: { params: Promise<{ slu
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: blush,
-          color: espresso,
+          backgroundColor: paper,
+          color: ink,
           padding: 72,
         }}
       >
-        <div style={{ display: "flex", fontSize: 26, letterSpacing: 4, color: muted }}>
+        <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: grey }}>
           {shop.name.toUpperCase()}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 96, lineHeight: 1 }}>{product?.name ?? shop.name}</div>
-          <div style={{ display: "flex", height: 2, backgroundColor: muted, opacity: 0.3, marginTop: 40 }} />
+          <div style={{ display: "flex", height: 1, backgroundColor: line, marginTop: 40 }} />
           <div
             style={{
               display: "flex",
@@ -53,12 +53,12 @@ export default async function OpengraphImage({ params }: { params: Promise<{ slu
               fontSize: 34,
             }}
           >
-            <span style={{ color: espresso }}>{product ? formatPriceForImage(product.price) : ""}</span>
-            <span style={{ color: muted }}>{product ? `Sizes ${product.sizes.join(" ")}` : ""}</span>
+            <span style={{ color: ink }}>{product ? formatPriceForImage(product.price) : ""}</span>
+            <span style={{ color: grey }}>{product ? `Sizes ${product.sizes.join(" ")}` : ""}</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", fontSize: 28, color: muted }}>Order on WhatsApp</div>
+        <div style={{ display: "flex", fontSize: 28, color: grey }}>Order on WhatsApp</div>
       </div>
     ),
     size,

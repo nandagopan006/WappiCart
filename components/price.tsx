@@ -2,12 +2,12 @@ import { cx } from "@/lib/cx";
 import { formatPrice } from "@/lib/products";
 
 /**
- * Numbers are always mono. A price in a serif looks like a magazine;
- * a price in mono looks like stock.
+ * The price, wherever it appears.
  *
- * There is no accent variant. The price is espresso in the grid and espresso on
- * the product sheet — ember is light, never paint, so it never prices anything.
- * Size, not colour, is what makes the price loud on the sheet.
+ * Ink, never tracked, never coloured. A tracked number is hard to read at a
+ * glance and the price is the one thing on a tile that has to be — so it is
+ * the only ink-coloured text under a product photograph, and the name above
+ * it stays grey.
  */
 export function Price({
   price,
@@ -19,13 +19,13 @@ export function Price({
   className?: string;
 }) {
   return (
-    <span className={cx("font-mono text-utility", className)}>
-      <span className="text-espresso">{formatPrice(price)}</span>
+    <span className={cx("text-price text-ink", className)}>
+      {formatPrice(price)}
       {mrp ? (
         <>
           {/* Struck-through text reads as a bare second number aloud, so the
               visual is hidden and the meaning is spelled out instead. */}
-          <s aria-hidden="true" className="text-muted ml-2 decoration-1">
+          <s aria-hidden="true" className="text-grey ml-2 decoration-1">
             {formatPrice(mrp)}
           </s>
           <span className="sr-only">, down from {formatPrice(mrp)}</span>

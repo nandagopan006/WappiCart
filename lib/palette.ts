@@ -11,16 +11,16 @@
  * These values are the source that @theme mirrors. Change both together.
  */
 export const palette = {
-  /** Gradient start, top of page. */
-  blush: "#F5E4DB",
-  /** Gradient end, bottom of page. */
-  sand: "#D9C0AD",
-  /** All text, and the hero panel. */
-  espresso: "#2A1F1A",
-  /** Glow only. Never a fill — see SKILL.md, "The ember rule". */
-  ember: "#C2552F",
-  /** Secondary text, hairlines. */
-  muted: "#8C7565",
+  /** The page. Plain white — the shoes supply the colour. */
+  paper: "#FFFFFF",
+  /** Banner bands and image plates. */
+  mist: "#F4F4F4",
+  /** Headings, prices, the order button. */
+  ink: "#1A1A1A",
+  /** Product names, captions, secondary text. */
+  grey: "#8A8A8A",
+  /** Hairlines and rules. */
+  line: "#E4E4E4",
   /** The 16px glyph inside the order button. Nothing else. */
   whatsapp: "#1FA855",
 } as const;

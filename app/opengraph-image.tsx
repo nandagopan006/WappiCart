@@ -10,7 +10,7 @@ export const alt = `${shop.name} — ${shop.tagline}`;
 
 /* Literals come from lib/palette.ts — see the note in
    app/p/[slug]/opengraph-image.tsx. */
-const { blush, espresso, muted } = palette;
+const { paper, ink, grey, line } = palette;
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -22,21 +22,21 @@ export default function OpengraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          backgroundColor: blush,
-          color: espresso,
+          backgroundColor: paper,
+          color: ink,
           padding: 72,
         }}
       >
-        <div style={{ display: "flex", fontSize: 26, letterSpacing: 4, color: muted }}>
+        <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: grey }}>
           {shop.name.toUpperCase()}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontSize: 92, lineHeight: 1.05, maxWidth: 900 }}>{shop.tagline}</div>
-          <div style={{ display: "flex", height: 2, backgroundColor: muted, opacity: 0.3, marginTop: 40 }} />
+          <div style={{ display: "flex", height: 1, backgroundColor: line, marginTop: 40 }} />
         </div>
 
-        <div style={{ display: "flex", fontSize: 28, color: muted }}>
+        <div style={{ display: "flex", fontSize: 28, color: grey }}>
           {pairsInStock()} pairs in stock
         </div>
       </div>
