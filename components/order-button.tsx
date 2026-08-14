@@ -12,18 +12,26 @@ import { cx } from "@/lib/cx";
  * back-and-forth, and back-and-forth loses the sale. An anchor cannot be
  * disabled, so the inert state is a real disabled button.
  */
-export function OrderButton({ product, size, className }: { product: Product; size: number | null; className?: string }) {
-  /* Fully rounded pill, espresso on blush. The border is always present so the
+export function OrderButton({
+  product,
+  size,
+  className,
+}: {
+  product: Product;
+  size: number | null;
+  className?: string;
+}) {
+  /* A square-cornered block, ink on paper. The border is always present so the
      hover inversion swaps two fills without shifting anything a pixel. */
   const base =
-    "flex h-14 w-full items-center justify-center gap-2 rounded-full border border-espresso text-body font-medium transition-colors focus-visible:outline-offset-4";
+    "text-caption flex h-13 w-full items-center justify-center gap-2 border uppercase transition-colors focus-visible:outline-offset-4";
 
   if (size === null) {
     return (
       <button
         type="button"
         disabled
-        className={cx(base, "cursor-not-allowed border-muted/30 bg-muted/15 text-muted", className)}
+        className={cx(base, "border-line text-grey cursor-not-allowed", className)}
       >
         Pick a size to order
       </button>
@@ -35,7 +43,7 @@ export function OrderButton({ product, size, className }: { product: Product; si
       href={buildOrderLink({ product, size })}
       target="_blank"
       rel="noopener noreferrer"
-      className={cx(base, "bg-espresso text-blush hover:bg-blush hover:text-espresso", className)}
+      className={cx(base, "border-ink bg-ink text-paper hover:bg-paper hover:text-ink", className)}
     >
       <WhatsappGlyph className="text-whatsapp" />
       Order on WhatsApp

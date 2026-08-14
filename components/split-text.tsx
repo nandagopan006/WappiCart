@@ -1,144 +1,121 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useMemo, useRef, type ElementType } from "react";
+import gsap from "gsap";
 
-import { prefersReducedMotion } from "@/lib/motion";
+import { cx } from "@/lib/cx";
+import {
+  DURATION,
+  EASE_SETTLE,
+  STAGGER,
+  prefersReducedMotion,
+  registerScrollTrigger,
+  useIsomorphicLayoutEffect,
+} from "@/lib/motion";
+
+/** How finely the string is cut. */
+export type SplitBy = "char" | "word" | "line";
 
 /**
- * Type that arrives one letter at a time, from behind its own baseline.
+ * The TEXT REVEAL preset. Each piece sits below its own mask and slides up
+ * into it, one after another.
  *
- * Each character sits in a span with `overflow: hidden`, and the glyph inside
- * is translated fully below it. Sliding the inner span up to 0 makes the
- * letter appear to rise out of the line rather than fade onto it — a mask
- * reveal, which is what stops a stagger reading as a cheap typewriter effect.
- *
- * ── Why this is CSS and not GSAP ─────────────────────────────────────────
- * It was a GSAP tween. A `yPercent` tween against these masked inline-blocks
- * would write its `from` state and then never advance — reproducibly, and
- * while sibling tweens inside the very same timeline ran to completion. It
- * survived every isolation: with and without a delay, with and without a
- * ScrollTrigger, driven by its own context and driven by the hero's timeline.
- *
- * Rather than ship an effect that works for reasons I cannot state, the reveal
- * is expressed as a transition, and the stagger as a per-glyph
- * transition-delay. The cascade does the scheduling, there is nothing to tick,
- * and the visual is identical.
+ * ── Opt in, never automatic ──────────────────────────────────────────────
+ * This is deliberately a component you wrap a headline in rather than
+ * something applied to every heading on the site. Split type on a section
+ * label is noise; split type on the one line a section is built around is the
+ * section's entrance. Use it two or three times a page, not ten.
  *
  * ── Accessibility ────────────────────────────────────────────────────────
- * Splitting text into per-character spans destroys it for a screen reader,
- * which would announce "W. A. P. P. I." one letter at a time. The whole string
- * is rendered once in a visually hidden span for assistive tech, and the split
- * copy is marked aria-hidden. The text is in the DOM twice and read once.
+ * A string cut into twenty `<span>`s is read aloud as twenty fragments, and
+ * some screen readers spell it out letter by letter. So the visible pieces are
+ * `aria-hidden` and the original string is repeated once in a `sr-only` node.
+ * What is heard is the sentence; what is seen is the animation.
  *
- * The hidden start state lives behind `.js` in globals.css with a failsafe, so
- * a bundle that never arrives cannot leave a headline parked below its mask.
+ * ── Why "line" is really "word" ──────────────────────────────────────────
+ * True line splitting means measuring where the browser actually wrapped, then
+ * re-measuring on every resize and font swap. That is a lot of layout thrash
+ * for a catalogue. `line` here cuts on explicit newlines in the string, so the
+ * author decides where the lines are — which is what an editorial headline
+ * wants anyway.
  */
 export function SplitText({
   children,
-  /** Seconds before the first character starts. */
-  delay = 0,
-  /** Seconds between characters. */
-  stagger = 0.03,
-  /**
-   * Reveal when the element scrolls into view rather than on mount. Section
-   * headings want this; the hero wordmark does not, because it is already on
-   * screen and belongs to the load sequence.
-   */
-  onScroll = false,
-  id,
-  className,
-  style,
   as: Tag = "span",
+  by = "char",
+  stagger,
+  delay = 0,
+  start = "top 88%",
+  className,
 }: {
+  /** Plain text only — this component cuts a string, not a React tree. */
   children: string;
-  delay?: number;
+  as?: ElementType;
+  by?: SplitBy;
+  /** Seconds between pieces. Defaults to the token for the chosen split. */
   stagger?: number;
-  onScroll?: boolean;
-  id?: string;
+  delay?: number;
+  start?: string;
   className?: string;
-  style?: CSSProperties;
-  as?: "span" | "h1" | "h2" | "p";
 }) {
   const ref = useRef<HTMLElement>(null);
-  const [revealed, setRevealed] = useState(false);
 
-  useLayoutEffect(() => {
+  const pieces = useMemo(() => {
+    if (by === "line") return children.split("\n");
+    if (by === "word") return children.split(" ");
+    return Array.from(children);
+  }, [children, by]);
+
+  const step = stagger ?? (by === "char" ? STAGGER.char : STAGGER.line);
+
+  useIsomorphicLayoutEffect(() => {
     const node = ref.current;
     if (!node) return;
 
     if (prefersReducedMotion()) {
-      setRevealed(true);
+      node.removeAttribute("data-motion-split");
       return;
     }
 
-    if (!onScroll) {
-      /* Two frames, not zero. The glyphs need one painted frame at their start
-         position, or the browser coalesces both states and the transition has
-         nothing to travel from. */
-      let inner = 0;
-      const outer = requestAnimationFrame(() => {
-        inner = requestAnimationFrame(() => setRevealed(true));
-      });
-      return () => {
-        cancelAnimationFrame(outer);
-        cancelAnimationFrame(inner);
-      };
-    }
+    const ScrollTrigger = registerScrollTrigger();
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        setRevealed(true);
-        observer.disconnect();
-      },
-      /* Fires a little before the element is fully on screen, so the reveal
-         finishes as it settles into view rather than starting after it. */
-      { rootMargin: "0px 0px -12% 0px" },
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        node.querySelectorAll("[data-piece]"),
+        { yPercent: 115 },
+        {
+          yPercent: 0,
+          duration: DURATION.long,
+          ease: EASE_SETTLE,
+          stagger: step,
+          delay,
+          scrollTrigger: { trigger: node, start, once: true },
+        },
+      );
+    }, node);
 
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [onScroll]);
-
-  const words = children.split(" ");
-
-  /* Characters are grouped into words for wrapping, but the stagger has to run
-     across the whole string — otherwise every word restarts the sequence and
-     the line arrives in clumps. This offsets each word by the characters
-     before it. */
-  const wordOffsets = words.reduce<number[]>((acc, word, i) => {
-    acc.push(i === 0 ? 0 : acc[i - 1] + words[i - 1].length);
-    return acc;
-  }, []);
+    return () => ctx.revert();
+  }, [step, delay, start, pieces.length]);
 
   return (
-    <Tag ref={ref as never} id={id} data-split-revealed={revealed} className={className} style={style}>
+    <Tag ref={ref} data-motion-split className={cx("block", className)}>
       <span className="sr-only">{children}</span>
 
       <span aria-hidden="true">
-        {/* Characters are grouped into whitespace-nowrap words.
-            Without this, every character is its own inline-block and the line
-            may break between any two of them — "Send one message" wraps as
-            "Send o / ne message". The space between words is a real text node,
-            so lines still break where they should. */}
-        {words.map((word, wordIndex) => (
-          <span key={wordIndex}>
-            <span className="inline-block whitespace-nowrap">
-              {Array.from(word).map((character, i) => (
-                /* The outer span is the mask; the inner one is what moves.
-                   `pb-[0.1em]` keeps descenders from being shaved off. */
-                <span key={i} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
-                  <span
-                    data-glyph
-                    className="inline-block will-change-transform"
-                    style={{ transitionDelay: `${delay + (wordOffsets[wordIndex] + i) * stagger}s` }}
-                  >
-                    {character}
-                  </span>
-                </span>
-              ))}
+        {pieces.map((piece, i) => (
+          <span
+            key={`${piece}-${i}`}
+            /* The mask. `inline-block` so it can be given a height to clip
+               against, and `overflow-hidden` so the piece below it is out of
+               sight until it travels up. */
+            className={cx("inline-block overflow-hidden", by === "line" && "block")}
+          >
+            <span data-piece className="inline-block will-change-transform">
+              {/* A space collapses to nothing inside an inline-block, so word
+                  and char splits would run together without this. */}
+              {piece === " " ? " " : piece}
+              {by === "word" && i < pieces.length - 1 ? " " : null}
             </span>
-            {wordIndex < words.length - 1 ? " " : null}
           </span>
         ))}
       </span>

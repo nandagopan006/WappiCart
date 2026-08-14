@@ -18,9 +18,10 @@ import type { Product } from "@/lib/products";
  * clutter before it reads any of the shoes.
  *
  * ── The caption ──────────────────────────────────────────────────────────
- * Name in tracked uppercase at 11px, price under it at 12px. The name is
- * grey and the price is ink, so a shopper scanning for a number finds it
- * without reading a single word.
+ * Name left, price right, both on one baseline and both ink — so the row
+ * has two anchors at the photograph's own edges rather than a centred stack
+ * floating under it. The colour sits below in grey, which is what tells two
+ * loafers apart at this size.
  */
 export function ProductCard({
   product,
@@ -37,15 +38,19 @@ export function ProductCard({
           alt={product.alt}
           fill
           priority={priority}
-          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+          sizes="(min-width: 1400px) 450px, (min-width: 640px) 33vw, 50vw"
           className="tile-media object-cover"
         />
       </div>
 
-      <div className="px-2 pt-4 pb-2 text-center">
-        <h3 className="text-caption text-grey uppercase">{product.name}</h3>
-        <Price price={product.price} mrp={product.mrp} className="mt-1.5 block" />
+      {/* Name and price on one baseline, pinned to opposite edges. Centring
+          them was what made a grid of twelve read as a template — a caption
+          aligned to the photograph's own edge reads as a catalogue entry. */}
+      <div className="mt-3 flex items-baseline justify-between gap-3">
+        <h3 className="text-caption text-ink truncate uppercase">{product.name}</h3>
+        <Price price={product.price} mrp={product.mrp} className="shrink-0 tabular-nums" />
       </div>
+      <p className="text-caption text-grey mt-1 uppercase">{product.colour}</p>
     </Link>
   );
 }

@@ -2,15 +2,9 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-import { ProductCard } from "@/components/product-card";
-import { ShowroomReveal } from "@/components/showroom-reveal";
-import { Wave } from "@/components/wave";
+import { ProductGrid } from "@/components/product-grid";
 import { SizeRun } from "@/components/size-run";
-import { EASE_SETTLE_POINTS } from "@/lib/motion";
 import {
   CATEGORIES,
   PRICE_BANDS,
@@ -32,52 +26,14 @@ import { cx } from "@/lib/cx";
  * between sizes shops.
  *
  * ── The controls ─────────────────────────────────────────────────────────
- * Two presentations of one state, chosen by width rather than duplicated.
+ * One thin row above the grid: shelves on the left, count and two doors on the
+ * right. The doors hold size, price and sort, because those are the deeper cut
+ * and do not deserve permanent furniture in a catalogue this small.
  *
- * On desktop the categories stay where they have always been — plain text
- * labels in the sticky bar with the ember underline marking the live one. That
- * bar is the page's signature and it is fast: five shelves, one click, nothing
- * to open. Size and price sit behind `size & price` beside `sort`, because they
- * are the deeper cut and do not deserve permanent furniture.
- *
- * Below `md` all five shelves plus a six-button size run will not fit on one
- * line, and the honest options are a scrolling strip or a panel. A strip that
- * scrolls sideways hides half its own options, so the bar collapses to `filter`
- * and `sort`, and the panel carries the shelves as well. One state either way —
- * the category row inside the panel is `md:hidden`, so no shopper is ever
- * looking at two category pickers at once.
- *
- * ── The reveal ───────────────────────────────────────────────────────────
- * Products arrive through `ShowroomReveal`, the same curtain the homepage and
- * the about page use: a clip rises from the bottom edge while the card comes
- * forward out of blur, staggered a column at a time. Every pair is remembered
- * once it has arrived — see `revealed` below — so a shelf being re-sorted moves
- * rather than re-unveiling itself.
- *
- * ── The filter morph ─────────────────────────────────────────────────────
- * Changing a filter REARRANGES the shelf instead of redrawing it: surviving
- * cards slide to their new positions, leaving cards fade and shrink out on the
- * spot, arriving cards rise in. Sorting is the same machinery with nothing
- * leaving — every pair walks to its new place. The shopper watches the shelf
- * being re-ordered rather than replaced, which is what a filter actually does.
- *
- * This is the one job on the site that genuinely needs Framer Motion: a layout
- * animation requires knowing every card's position before AND after a React
- * re-render, which is exactly what the `layout` prop does and what hand-rolled
- * CSS cannot. `mode="popLayout"` takes leaving cards out of the flow
- * immediately, so the survivors start sliding at once instead of waiting for
- * the exit to finish.
- *
- * Under reduced motion every animation prop turns off, the panel opens without
- * a transition, and a filter is an instant swap.
+ * Nothing here animates. A filter is an instant swap — a grid that tweens into
+ * its new arrangement makes the shopper wait to read the result of their own
+ * click.
  */
-
-/* The one easing, typed as the cubic-bezier tuple Motion expects. */
-const SETTLE: [number, number, number, number] = [...EASE_SETTLE_POINTS];
-
-/* Desktop column count. Only used to stagger the reveal a row at a time, so a
-   two-column phone gets a slightly different cadence and nothing else. */
-const COLUMNS = 3;
 
 type SortKey = "featured" | "new" | "price-asc" | "price-desc";
 
@@ -97,8 +53,17 @@ const SORTS: ReadonlyArray<{ key: SortKey; label: string }> = [
 
 type Panel = "filter" | "sort" | null;
 
+/**
+ * How many pairs a page of the shelf holds.
+ *
+ * Six is two full rows of the three-up grid, so a page always ends on a
+ * complete row — a load-more that leaves one orphan tile hanging looks like a
+ * layout bug rather than a boundary.
+ */
+const PAGE_SIZE = 6;
+
 export function Catalog({ products, sizesInStock }: { products: Product[]; sizesInStock: number[] }) {
-  /* The homepage's category rows arrive as /shop?c=loafers, so the filter is
+  /* The header's category links arrive as /shop?c=loafers, so the filter is
      already applied when the page opens. Validated against CATEGORIES rather
      than trusted — ?c=anything would otherwise show an empty shelf and read as
      a bug. */
@@ -110,27 +75,29 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
   const [band, setBand] = useState<PriceBandId | null>(null);
   const [sort, setSort] = useState<SortKey>("featured");
   const [panel, setPanel] = useState<Panel>(null);
-  const reduced = useReducedMotion();
 
-  /* The split header's category rows link to /shop?c=x from within /shop.
-     Same route, so this component never remounts — state initialised from the
-     URL once would go stale and the click would silently do nothing. This
-     keeps the URL authoritative whenever it changes. */
+  /**
+   * How many of the filtered pairs are on screen.
+   *
+   * The whole catalogue is already in the browser — twelve products ship with
+   * the page — so "loading more" is slicing an array the client already holds.
+   * There is no request to make and nothing to wait for, which is why there is
+   * no spinner and no pending state here: a loading indicator for work that
+   * takes no time is a lie about the interface.
+   *
+   * If the shelf ever outgrows what is sensible to ship at once, this is the
+   * seam: `shown` becomes a cursor and this component fetches the next page.
+   * Nothing above it has to change.
+   */
+  const [shown, setShown] = useState(PAGE_SIZE);
+
+  /* The header's category links point to /shop?c=x from within /shop. Same
+     route, so this component never remounts — state initialised from the URL
+     once would go stale and the click would silently do nothing. This keeps
+     the URL authoritative whenever it changes. */
   useEffect(() => {
     setCategory(CATEGORIES.find((c) => c === requested) ?? null);
   }, [requested]);
-
-  /* Which pairs have finished arriving. A ref rather than state on purpose:
-     nothing about the page should re-render because a curtain finished, and by
-     the time this is read again — on the next filter or sort — it is current.
-
-     Without it, filtering to "loafers" and back would make every returning pair
-     unveil itself a second time, and the shelf would look like it was loading
-     rather than re-sorting. */
-  const revealed = useRef(new Set<string>());
-  const markRevealed = useCallback((slug: string) => {
-    revealed.current.add(slug);
-  }, []);
 
   const visible = useMemo(() => {
     /* Shelf order — the sequence in products.json — is the tie-breaker under
@@ -162,6 +129,18 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
     }
   }, [products, category, sizes, band, sort]);
 
+  /* Any change to the filters or the ordering starts the shelf over.
+     Without this, narrowing to four loafers after having loaded twelve pairs
+     would leave `shown` at 12 — harmless — but widening again would silently
+     reveal everything at once, and the shopper would never see the boundary
+     they had been clicking through. */
+  useEffect(() => {
+    setShown(PAGE_SIZE);
+  }, [category, sizes, band, sort]);
+
+  const page = visible.slice(0, shown);
+  const remaining = visible.length - page.length;
+
   /* Live counts beside each price band, so a band that has nothing in it says
      so rather than leading the shopper to an empty shelf. */
   const bandCounts = useMemo(
@@ -173,7 +152,7 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
   );
 
   /* Two counts, because the two buttons hold different things. On desktop the
-     shelf is picked in the bar, so the `size & price` door must not claim it. */
+     shelf is picked in the row, so the `size & price` door must not claim it. */
   const deepFilters = (sizes.length > 0 ? 1 : 0) + (band ? 1 : 0);
   const activeFilters = deepFilters + (category ? 1 : 0);
 
@@ -205,164 +184,108 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
     };
   }, [panel]);
 
-  /* Every card carries a scroll-driven parallax and a scroll-triggered reveal,
-     and both cache the page geometry they were built against. Filtering changes
-     the height of the grid underneath them, so without this every trigger below
-     the fold is measuring against a page that no longer exists.
-
-     Deliberately after the 400ms layout tween has landed rather than during it:
-     refreshing mid-morph measures cards in transit. */
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const id = window.setTimeout(() => ScrollTrigger.refresh(), 450);
-    return () => window.clearTimeout(id);
-  }, [visible]);
-
-  const togglePanel = (next: Exclude<Panel, null>) => setPanel((current) => (current === next ? null : next));
+  const togglePanel = (next: Exclude<Panel, null>) =>
+    setPanel((current) => (current === next ? null : next));
 
   return (
-    <section>
+    <section className="max-w-page mx-auto px-4 md:px-8">
       {/* Spoken, not just shown. A filter that silently changes the length of a
-          list tells a screen reader nothing, and the visible count above is
-          `hidden` below lg — a display:none live region announces nothing, so
-          the announcement has to be its own always-rendered element. */}
+          list tells a screen reader nothing, and the visible count is hidden
+          below sm — a display:none live region announces nothing, so the
+          announcement has to be its own always-rendered element. */}
       <p aria-live="polite" className="sr-only">
-        {visible.length} {visible.length === 1 ? "style" : "styles"} on the shelf
+        Showing {page.length} of {visible.length} {visible.length === 1 ? "style" : "styles"} on the
+        shelf
       </p>
 
-      {/* Sticks once the page header has scrolled past. */}
-      <div ref={barRef} className="bg-blush/85 sticky top-0 z-30 backdrop-blur-md">
-        <div className="max-w-page mx-auto px-5 md:px-8">
-          <div className="flex items-center justify-between gap-x-6 py-3">
-            {/* Desktop: the shelves stay in the open. Five names, one click. */}
-            <div className="hidden flex-wrap items-center gap-x-5 gap-y-1 md:flex">
-              <FilterLabel active={category === null} onClick={() => setCategory(null)}>
-                all
+      <div ref={barRef} className="border-line border-b">
+        <div className="text-caption flex items-center justify-between gap-4 py-3 uppercase">
+          {/* The shelves stay in the open from sm up. Five names, one click. */}
+          <div className="hidden flex-wrap items-center gap-x-6 gap-y-1 sm:flex">
+            <FilterLabel active={category === null} onClick={() => setCategory(null)}>
+              all
+            </FilterLabel>
+            {CATEGORIES.map((c) => (
+              <FilterLabel key={c} active={category === c} onClick={() => setCategory(c)}>
+                {c}
               </FilterLabel>
-              {CATEGORIES.map((c) => (
-                <FilterLabel key={c} active={category === c} onClick={() => setCategory(c)}>
-                  {c}
-                </FilterLabel>
-              ))}
-            </div>
+            ))}
+          </div>
 
-            {/* Phone: one door, holding the shelves and everything else. */}
+          {/* Phone: one door, holding the shelves and everything else. */}
+          <ControlButton
+            className="sm:hidden"
+            open={panel === "filter"}
+            count={activeFilters}
+            controls="catalog-filter-panel"
+            onClick={() => togglePanel("filter")}
+          >
+            filter
+          </ControlButton>
+
+          <div className="flex shrink-0 items-center gap-x-6">
+            <p className="text-grey hidden tabular-nums lg:block">
+              {String(visible.length).padStart(2, "0")}{" "}
+              {visible.length === 1 ? "style" : "styles"}
+            </p>
+
             <ControlButton
-              className="md:hidden"
+              className="hidden sm:inline-flex"
               open={panel === "filter"}
-              count={activeFilters}
+              count={deepFilters}
               controls="catalog-filter-panel"
               onClick={() => togglePanel("filter")}
             >
-              filter
+              size &amp; price
             </ControlButton>
 
-            <div className="flex shrink-0 items-center gap-x-5">
-              {/* The count only has room to show itself on a wide screen. */}
-              <p className="font-mono text-utility text-muted hidden tabular-nums lg:block">
-                {String(visible.length).padStart(2, "0")} {visible.length === 1 ? "style" : "styles"}
-              </p>
-
-              <ControlButton
-                className="hidden md:inline-flex"
-                open={panel === "filter"}
-                count={deepFilters}
-                controls="catalog-filter-panel"
-                onClick={() => togglePanel("filter")}
-              >
-                size &amp; price
-              </ControlButton>
-
-              <ControlButton
-                open={panel === "sort"}
-                controls="catalog-sort-panel"
-                onClick={() => togglePanel("sort")}
-              >
-                sort
-              </ControlButton>
-            </div>
+            <ControlButton
+              open={panel === "sort"}
+              controls="catalog-sort-panel"
+              onClick={() => togglePanel("sort")}
+            >
+              sort
+            </ControlButton>
           </div>
-
-          <Wave />
-
-          {/* Move 2, RISE, applied to a panel: opacity and a little height, and
-              nothing else. The bar it hangs from is already blurred, so the
-              panel inherits the frosting rather than growing its own. */}
-          <AnimatePresence initial={false}>
-            {panel !== null ? (
-              <motion.div
-                key={panel}
-                id={panel === "filter" ? "catalog-filter-panel" : "catalog-sort-panel"}
-                initial={reduced ? false : { height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: reduced ? 0 : 0.34, ease: SETTLE }}
-                className="overflow-hidden"
-              >
-                <motion.div
-                  initial={reduced ? false : { y: -8 }}
-                  animate={{ y: 0 }}
-                  exit={{ y: -8 }}
-                  transition={{ duration: reduced ? 0 : 0.34, ease: SETTLE }}
-                  className="pt-6 pb-8"
-                >
-                  {panel === "filter" ? (
-                    <FilterPanel
-                      category={category}
-                      onCategory={setCategory}
-                      sizes={sizes}
-                      onSizes={setSizes}
-                      sizesInStock={sizesInStock}
-                      band={band}
-                      onBand={setBand}
-                      bandCounts={bandCounts}
-                      showing={visible.length}
-                      activeFilters={activeFilters}
-                      onClear={clearFilters}
-                    />
-                  ) : (
-                    <SortPanel sort={sort} onSort={setSort} />
-                  )}
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
         </div>
+
+        {panel !== null ? (
+          <div
+            id={panel === "filter" ? "catalog-filter-panel" : "catalog-sort-panel"}
+            className="border-line border-t py-6"
+          >
+            {panel === "filter" ? (
+              <FilterPanel
+                category={category}
+                onCategory={setCategory}
+                sizes={sizes}
+                onSizes={setSizes}
+                sizesInStock={sizesInStock}
+                band={band}
+                onBand={setBand}
+                bandCounts={bandCounts}
+                showing={visible.length}
+                activeFilters={activeFilters}
+                onClear={clearFilters}
+              />
+            ) : (
+              <SortPanel sort={sort} onSort={setSort} />
+            )}
+          </div>
+        ) : null}
       </div>
 
-      <div className="max-w-page mx-auto px-5 pt-12 md:px-8 md:pt-20">
+      <div className="pt-10 pb-section">
         {visible.length > 0 ? (
-          <div className="grid grid-cols-2 items-start gap-x-6 gap-y-14 md:grid-cols-3 md:gap-x-12 md:gap-y-24">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visible.map((product, i) => (
-                <motion.div
-                  key={product.slug}
-                  layout={reduced ? false : true}
-                  initial={reduced ? false : { opacity: 0, y: 16, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={reduced ? undefined : { opacity: 0, scale: 0.96 }}
-                  transition={{
-                    duration: 0.4,
-                    ease: SETTLE,
-                    layout: { duration: 0.4, ease: SETTLE },
-                  }}
-                >
-                  {/* The curtain, staggered a column at a time so a row lifts
-                      as one gesture rather than twelve. `skip` is read at
-                      render, which is after the previous pass recorded it — a
-                      pair that has already arrived simply appears in its new
-                      position and lets the layout tween carry it there. */}
-                  <ShowroomReveal
-                    index={i % COLUMNS}
-                    skip={revealed.current.has(product.slug)}
-                    onDone={() => markRevealed(product.slug)}
-                  >
-                    <ProductCard product={product} priority={i < 6} />
-                  </ShowroomReveal>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          <>
+            <ProductGrid products={page} priorityCount={3} />
+            <LoadMore
+              shown={page.length}
+              total={visible.length}
+              step={Math.min(PAGE_SIZE, remaining)}
+              onMore={() => setShown((current) => current + PAGE_SIZE)}
+            />
+          </>
         ) : (
           <EmptyResult category={category} sizes={sizes} band={band} onClear={clearFilters} />
         )}
@@ -372,10 +295,76 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
 }
 
 /**
- * The filter's only control shape: a word that carries the ember underline when
- * it is live. Used for the shelves in the bar, the shelves in the panel, the
- * price bands and the sort options — four different jobs, one gesture, because
- * a page that invents a new control for every list is a dashboard.
+ * The end of a page of the shelf.
+ *
+ * Three things, in the order a shopper needs them: how far through they are,
+ * how far there is to go, and the way to go further.
+ *
+ * ── Why a button and not an infinite scroll ──────────────────────────────
+ * A shelf that loads as you reach the bottom takes the footer away from
+ * anyone trying to reach it, and it removes the one moment where a shopper
+ * decides whether to keep looking. A count and a button hand that decision
+ * back. It is also the only version that works with a keyboard.
+ *
+ * The progress rule is the same hairline the rest of the page is built from,
+ * filled to the proportion seen. It replaces the "page 1 of 2" that a
+ * numbered pager would need — with a continuous list, position is a fraction
+ * rather than a page number.
+ */
+function LoadMore({
+  shown,
+  total,
+  step,
+  onMore,
+}: {
+  shown: number;
+  total: number;
+  /** How many the next press will add. Shown so the button is a promise. */
+  step: number;
+  onMore: () => void;
+}) {
+  /* One page holds everything — there is nothing to say. */
+  if (total <= PAGE_SIZE) return null;
+
+  const done = shown >= total;
+
+  return (
+    <div className="mt-16 flex flex-col items-center gap-6">
+      {/* The rule, filled to the proportion seen. */}
+      <div aria-hidden="true" className="bg-line h-px w-full max-w-xs overflow-hidden">
+        <div
+          className="bg-ink h-px transition-[width] duration-500 ease-(--ease-settle)"
+          style={{ width: `${Math.round((shown / total) * 100)}%` }}
+        />
+      </div>
+
+      <p className="text-caption text-grey tabular-nums uppercase">
+        Showing {shown} of {total}
+      </p>
+
+      {done ? (
+        <p className="text-caption text-grey uppercase">That is the whole shelf.</p>
+      ) : (
+        <button
+          type="button"
+          onClick={onMore}
+          className="text-caption border-ink bg-paper text-ink hover:bg-ink hover:text-paper inline-flex h-13 items-center gap-2 border px-10 uppercase transition-colors"
+        >
+          Load more
+          {/* Opacity rather than a grey token: the button inverts on hover,
+              and a fixed grey would drop to unreadable against the ink fill. */}
+          <span className="tabular-nums opacity-50">({step})</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The filter's only control shape: a word that goes ink and underlined when it
+ * is live. Used for the shelves, the price bands and the sort options — three
+ * different jobs, one gesture, because a page that invents a new control for
+ * every list is a dashboard.
  */
 function FilterLabel({
   active,
@@ -385,7 +374,7 @@ function FilterLabel({
 }: {
   active: boolean;
   onClick: () => void;
-  /** Shown in mono beside the label. Omitted where a count would be noise. */
+  /** Shown beside the label. Omitted where a count would be noise. */
   count?: number;
   children: React.ReactNode;
 }) {
@@ -395,23 +384,16 @@ function FilterLabel({
       onClick={onClick}
       aria-pressed={active}
       className={cx(
-        "text-body relative py-2 lowercase transition-colors",
-        active ? "text-espresso" : "text-muted hover:text-espresso",
+        "py-1 uppercase transition-colors",
+        active
+          ? "text-ink underline decoration-1 underline-offset-4"
+          : "text-grey hover:text-ink",
       )}
     >
       {children}
       {count !== undefined ? (
-        <span className="font-mono text-utility text-muted ml-2 tabular-nums">
-          {String(count).padStart(2, "0")}
-        </span>
+        <span className="text-grey ml-2 tabular-nums">{String(count).padStart(2, "0")}</span>
       ) : null}
-      <span
-        aria-hidden="true"
-        className={cx(
-          "filter-underline absolute inset-x-0 bottom-1 h-px origin-left transition-transform duration-200 ease-(--ease-settle)",
-          active ? "scale-x-100" : "scale-x-0",
-        )}
-      />
     </button>
   );
 }
@@ -439,14 +421,14 @@ function ControlButton({
       aria-expanded={open}
       aria-controls={controls}
       className={cx(
-        "text-body inline-flex items-center gap-2 py-2 lowercase transition-colors",
-        open ? "text-espresso" : "text-muted hover:text-espresso",
+        "inline-flex items-center gap-2 py-1 uppercase transition-colors",
+        open ? "text-ink" : "text-grey hover:text-ink",
         className,
       )}
     >
       {children}
       {count > 0 ? (
-        <span className="font-mono text-utility text-espresso tabular-nums">
+        <span className="text-ink tabular-nums">
           {count}
           <span className="sr-only"> filters applied</span>
         </span>
@@ -458,10 +440,7 @@ function ControlButton({
         height="6"
         viewBox="0 0 9 6"
         fill="none"
-        className={cx(
-          "transition-transform duration-300 ease-(--ease-settle)",
-          open && "rotate-180",
-        )}
+        className={cx("transition-transform duration-200", open && "rotate-180")}
       >
         <path d="M1 1.25 4.5 4.75 8 1.25" stroke="currentColor" strokeWidth="1" />
       </svg>
@@ -469,9 +448,9 @@ function ControlButton({
   );
 }
 
-/** A mono rubric over each group in the panel. */
+/** A rubric over each group in the panel. */
 function PanelLabel({ children }: { children: React.ReactNode }) {
-  return <p className="font-mono text-utility text-muted mb-1 uppercase">{children}</p>;
+  return <p className="text-caption text-grey mb-2 uppercase">{children}</p>;
 }
 
 function FilterPanel({
@@ -500,12 +479,12 @@ function FilterPanel({
   onClear: () => void;
 }) {
   return (
-    <div className="grid gap-8 md:grid-cols-2 md:gap-12 lg:gap-16">
-      {/* Phone only. On desktop these five live in the bar above, and two
+    <div className="grid gap-8 sm:grid-cols-2 lg:gap-16">
+      {/* Phone only. From sm up these five live in the row above, and two
           category pickers on one screen is one too many. */}
-      <div className="md:hidden">
+      <div className="sm:hidden">
         <PanelLabel>Shelf</PanelLabel>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        <div className="text-caption flex flex-wrap items-center gap-x-5 gap-y-1">
           <FilterLabel active={category === null} onClick={() => onCategory(null)}>
             all
           </FilterLabel>
@@ -527,14 +506,13 @@ function FilterPanel({
           selected={sizes}
           onSelect={onSizes}
           label="Filter by size"
-          tone="filter"
           className="-ml-1"
         />
       </div>
 
       <div>
         <PanelLabel>Price</PanelLabel>
-        <div className="flex flex-col items-start gap-y-1">
+        <div className="text-caption flex flex-col items-start gap-y-1">
           {PRICE_BANDS.map((b) => (
             <FilterLabel
               key={b.id}
@@ -548,16 +526,12 @@ function FilterPanel({
         </div>
       </div>
 
-      <div className="border-muted/25 flex items-center justify-between gap-4 border-t pt-4 md:col-span-2">
-        <p className="font-mono text-utility text-muted tabular-nums">
+      <div className="border-line text-caption flex items-center justify-between gap-4 border-t pt-4 uppercase sm:col-span-2">
+        <p className="text-grey tabular-nums">
           {String(showing).padStart(2, "0")} {showing === 1 ? "style" : "styles"} on the shelf
         </p>
         {activeFilters > 0 ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="link-underline text-body text-muted hover:text-espresso lowercase"
-          >
+          <button type="button" onClick={onClear} className="link-quiet text-grey hover:text-ink uppercase">
             clear filters
           </button>
         ) : null}
@@ -570,7 +544,7 @@ function SortPanel({ sort, onSort }: { sort: SortKey; onSort: (s: SortKey) => vo
   return (
     <div>
       <PanelLabel>Sort by</PanelLabel>
-      <div className="flex flex-col items-start gap-y-1 md:flex-row md:items-center md:gap-x-8">
+      <div className="text-caption flex flex-col items-start gap-y-1 sm:flex-row sm:items-center sm:gap-x-8">
         {SORTS.map((option) => (
           <FilterLabel key={option.key} active={sort === option.key} onClick={() => onSort(option.key)}>
             {option.label}
@@ -599,26 +573,22 @@ function EmptyResult({
   const atPrice = band ? ` ${PRICE_BANDS.find((b) => b.id === band)?.label.toLowerCase()}` : "";
 
   return (
-    <div className="max-w-[42ch] py-8">
+    <div className="mx-auto max-w-[46ch] py-16 text-center">
       <p className="text-body">
         No {what}
         {inSizes}
         {atPrice} right now — message us and we&rsquo;ll check the back.
       </p>
-      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+      <div className="text-caption mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 uppercase">
         <a
           href={buildStockEnquiryLink({ sizes, category: category ?? undefined })}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-body decoration-muted/30 hover:decoration-espresso inline-block underline underline-offset-4"
+          className="link-quiet text-ink"
         >
           Message us on WhatsApp
         </a>
-        <button
-          type="button"
-          onClick={onClear}
-          className="link-underline text-body text-muted hover:text-espresso lowercase"
-        >
+        <button type="button" onClick={onClear} className="link-quiet text-grey hover:text-ink uppercase">
           clear filters
         </button>
       </div>

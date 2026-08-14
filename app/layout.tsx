@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { palette } from "@/lib/palette";
 import { shop } from "@/lib/shop";
 
@@ -48,7 +49,22 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={jost.variable}>
+    <html
+      lang="en"
+      className={jost.variable}
+      /* The inline script below adds `js` before React hydrates, so the
+         server HTML and the client tree disagree about className by design.
+         Without this, that shows up as a hydration error on every page. */
+      suppressHydrationWarning
+    >
+      {/* Marks the document as scripted before first paint, so the motion
+          components can hold their start states without ever hiding content
+          from a visitor whose bundle failed to load. See globals.css. */}
+      <head>
+        <script
+          dangerouslySetInnerHTML={{ __html: `document.documentElement.classList.add('js')` }}
+        />
+      </head>
       <body className="bg-paper text-ink font-sans">
         <a
           href="#main"
@@ -56,6 +72,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to the shoes
         </a>
+        <SmoothScroll />
         <SiteHeader />
         <main id="main">{children}</main>
         <SiteFooter />

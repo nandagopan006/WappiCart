@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductDetail } from "@/components/product-detail";
-import { formatPrice, getProduct, products } from "@/lib/products";
+import { ProductGrid } from "@/components/product-grid";
+import { SectionHeading } from "@/components/section-heading";
+import { formatPrice, getProduct, products, relatedProducts } from "@/lib/products";
 import { shop } from "@/lib/shop";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -39,6 +41,8 @@ export default async function ProductPage({ params }: Params) {
 
   if (!product) notFound();
 
+  const related = relatedProducts(product, 4);
+
   /* Product schema so the price and availability show up in search, and so a
      forwarded link previews as a shoe rather than a bare URL. */
   const jsonLd = {
@@ -66,17 +70,21 @@ export default async function ProductPage({ params }: Params) {
   };
 
   return (
-    <article className="mx-auto max-w-[560px] px-5 pt-6 pb-16 md:pt-10">
+    <div className="max-w-page mx-auto px-4 pt-6 pb-section md:px-8 md:pt-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      <Link
-        href="/shop"
-        className="font-mono text-utility text-muted hover:text-espresso mb-8 inline-block uppercase transition-colors"
-      >
+      <Link href="/shop" className="link-quiet text-caption text-grey hover:text-ink mb-8 inline-block uppercase">
         ← All shoes
       </Link>
 
       <ProductDetail product={product} headingLevel="h1" imagePriority />
-    </article>
+
+      {related.length > 0 ? (
+        <section className="mt-section">
+          <SectionHeading>More in {product.category}</SectionHeading>
+          <ProductGrid products={related} className="mt-10" priorityCount={0} />
+        </section>
+      ) : null}
+    </div>
   );
 }
