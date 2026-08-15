@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ImageReveal } from "@/components/image-reveal";
 import { Magnetic } from "@/components/magnetic";
+import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { formatPrice, type Product } from "@/lib/products";
 
@@ -39,7 +40,9 @@ export function ProductStory({ product, index }: { product: Product; index: numb
         <div className="mt-10 grid gap-10 md:mt-14 md:grid-cols-12 md:gap-8">
           {/* ── The facts ───────────────────────────────────────────────── */}
           <ScrollReveal className="md:col-span-4 md:row-start-1 md:self-center">
-            <h2 className="text-display text-paper font-light uppercase">{product.name}</h2>
+            <ProximityText as="h2" className="text-display text-paper font-light uppercase">
+              {product.name}
+            </ProximityText>
 
             <p className="text-body text-paper/60 mt-5 max-w-[34ch]">{product.description}</p>
 
