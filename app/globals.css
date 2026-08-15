@@ -81,8 +81,17 @@
   --container-page: 1400px;
 
   /* ── Motion ──────────────────────────────────────────────── */
-  /* One easing, and almost nothing uses it. */
+  /* The easing for anything that MOVES. Fast away, long soft
+     landing, no overshoot. */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The easing for anything that only CHANGES OPACITY.
+     `--ease-settle` is wrong for a fade: it reaches ~70% in the
+     first fifth of its duration, so an image appears almost at
+     once and then creeps — which reads as a pop, not a dissolve.
+     This is symmetric, so a cross-fade takes as long to arrive as
+     it does to leave. Photography only; nothing that travels. */
+  --ease-fade: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 @layer components {

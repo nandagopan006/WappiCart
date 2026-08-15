@@ -134,13 +134,20 @@ export function WishlistGrid({ products }: { products: Product[] }) {
       )}
 
       {/* Shown either way. With a wishlist it is what to look at next; without
-          one it is the whole point of the page. */}
-      <ScrollReveal>
-        <RecommendationRail
-          products={recommendations}
-          heading={items.length > 0 ? "You may also like" : "More to explore"}
-        />
-      </ScrollReveal>
+          one it is the whole point of the page.
+
+          The rail stages its own reveal — header first, then the strip — so it
+          is not wrapped in one here. A second wrapper would hide the header
+          and the cards together and lose that order. */}
+      <RecommendationRail
+        products={recommendations}
+        heading={items.length > 0 ? "You may also like" : "More to explore"}
+        note={
+          items.length > 0
+            ? "More from the shelves you are saving from."
+            : "A place to start. Save a pair and this becomes a shortlist."
+        }
+      />
 
       <ConfirmDialog
         open={confirming}

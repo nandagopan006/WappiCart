@@ -154,13 +154,19 @@ live in **`lib/palette.ts`** and nowhere else. Import from there; never inline.
 
 ## Type
 
-**One family: Jost.** Weights 300, 400, 500. There is no second face — a
-display serif beside a dense photo grid competes with the photographs, which
-is the one thing the layout cannot afford.
+**One family: Jost, loaded as a variable font** with its full 100–900 axis.
+There is no second face — a display serif beside a dense photo grid competes
+with the photographs, which is the one thing the layout cannot afford.
+
+The variable cut is not a preference. `ProximityText` interpolates weight
+under the cursor, and with static 300/400/500 faces the browser can only snap
+between three values — the animation reads as three hard steps. Naming any
+`weight` in `next/font` breaks that. One variable file is also less to
+download than three static ones.
 
 | Token | Size | Use |
 |---|---|---|
-| `text-display` | 48 → 144px, weight 300, tracking -0.045em, UPPERCASE | **home page only** |
+| `text-display` | 36 → 72px, weight 300, tracking -0.03em, UPPERCASE | **home page only** |
 | `text-lead` | 17 → 20px | the one paragraph allowed under a display line |
 | `text-title` | 20 → 24px | page and section titles, product name on the sheet |
 | `text-section` | 13px, tracking 0.18em, uppercase | the rule-heading band |
@@ -173,7 +179,9 @@ Rules:
   /about top out at `text-title` — a shopper who has started shopping does not
   need to be sold to again. A display size used twice reads as a campaign;
   used ten times it reads as a template.
-- **Display type is weight 300, uppercase, tracked to -0.03em.**
+- **Display type is weight 300, uppercase, tracked to -0.03em.** It caps at
+  72px on purpose: it was 144px and had to be positioned on top of the
+  photographs to fit, which is the rule below.
 - **Type never sits on top of a photograph.** No absolute positioning over an
   image, no blend modes, no negative margins pulling one block over another.
   A headline that has to be positioned on top of a picture to fit is too big
@@ -184,8 +192,22 @@ Rules:
   Body copy is sentence case and never tracked.
 - **The price is never tracked.** A tracked number is hard to read at a glance
   and the price is the one thing that has to be.
-- Captions under tiles are centred. Body paragraphs are never centred, never
-  justified.
+- **Nothing under a tile is centred** — see the caption rule above. Body
+  paragraphs are never centred and never justified either. The only centred
+  text on the site is an empty state and the closing line of a section, both
+  of which are single short blocks with nothing to align to.
+
+### Splitting text
+
+`SplitText` and `ProximityText` cut a string into spans. Both cut in three
+tiers — **lines → words → glyphs** — and the word tier is load-bearing: every
+glyph is its own `inline-block`, and without a `whitespace-nowrap` box around
+each word the browser will break a line mid-word (`BROGU / E WING`). The
+breakable space belongs **between** those boxes, never as the first child of
+one, where the inline formatting context trims it and the words run together.
+
+`\n` in the string forces a line. Use it rather than relying on the container's
+width to break a two-line statement.
 
 ---
 
@@ -217,10 +239,25 @@ All timing and easing lives in **`lib/motion.ts`**. Never write a raw duration
 or an easing string in a component.
 
 ```
-EASE_SETTLE   one curve, three forms (CSS / Motion points / GSAP)
+EASE_SETTLE   things that MOVE. One curve, three forms (CSS / Motion / GSAP)
+--ease-fade   things that only change OPACITY. CSS token, photography only
 DURATION      quick .26 · settle .5 · reveal .7 · long .9   — nothing longer
 STAGGER       char .018 · line .06 · card .08
 ```
+
+**Two curves, and the split is not cosmetic.** `--ease-settle` reaches ~70% in
+the first fifth of its duration — right for something arriving in place, wrong
+for a fade, where it reads as a pop rather than a dissolve. `--ease-fade` is
+symmetric, so a cross-fade takes as long to leave as to arrive. Anything that
+travels uses settle; there is no third curve.
+
+### Cross-fading two images
+
+**Only the top layer animates.** Fading one image out while fading another in
+is the obvious way to write it and it is wrong: halfway through, both sit at
+50% over a pale plate and the composite goes washed-out — a visible flash.
+Hold the lower image fully opaque and dissolve the upper one over it, so the
+stack is never less than opaque and there is nothing to dip.
 
 ### The four tools, and what each is for
 
@@ -240,12 +277,14 @@ and a filter transition written in GSAP are both signs the system has drifted.
 Compose from these. Do not hand-roll a reveal beside them.
 
 ```
-<ScrollReveal>    opacity + short lift, once on enter. The default entrance.
-<ImageReveal>     clip-path mask opens, picture settles back from overscale
-<SplitText>       char / word / line, each piece rising out of its own mask
-<Parallax>        scrubbed drift against the scroll
-<Magnetic>        cursor lean, desktop only
-<Marquee>         horizontal, scroll-driven by default
+<ScrollReveal>     opacity + short lift, once on enter. The default entrance.
+<ImageReveal>      clip-path mask opens, picture settles back from overscale
+<SplitText>        char / word / line, each piece rising out of its own mask
+<ProximityText>    glyphs lift and gain weight toward the cursor, desktop only
+<Parallax>         scrubbed drift against the scroll
+<Magnetic>         cursor lean, desktop only
+<Marquee>          horizontal, scroll-driven by default
+<ConfirmDialog>    the only modal. Never `confirm()`.
 ```
 
 ### Rules
@@ -258,6 +297,15 @@ Compose from these. Do not hand-roll a reveal beside them.
   of their own tap. A filter is an instant swap.
 - Transform and opacity only. `clip-path` is allowed; `filter: blur` is
   allowed on **one** element per page and nowhere near the grid.
+- **`font-weight` is the exception, and it is expensive.** Every distinct
+  value re-shapes and re-rasters the glyph, so `ProximityText` quantises it to
+  steps of 8 and writes only when the rounded value changes. It also pins each
+  glyph in a slot measured at rest — a heavier glyph is a wider glyph, and
+  animating weight in normal flow makes the whole line jitter. Never centre a
+  glyph in that slot: centring drags its left edge as it thickens, which is a
+  wobble on top of the lift.
+- Measure after `document.fonts.ready`. Measuring before the face arrives
+  locks every slot to the fallback's metrics.
 - Every preset checks `prefersReducedMotion()` and returns static. The
   `globals.css` media query is the safety net, not the implementation.
 - Start states live in CSS behind `html.js` with a 3s failsafe, so a failed
@@ -274,25 +322,84 @@ a fifth means the system has drifted.
 ## Pages
 
 ```
-/            The whole shop — New in grid, banner strip, Best selling grid
-/shop        The same stock with filters attached
+/            Nine numbered sections — full-bleed banner, New in, two category
+             stories, the inverted product story, a collection spread, the
+             shelf tiles, the brand statement, six pairs, the order block
+/shop        The whole shelf with filters, sorting and load-more
 /p/[slug]    Stacked photographs left, sticky decision column right
 /about       One portrait, four paragraphs, a table of facts
+/wishlist    Saved pairs, clear-all, and a recommendation rail
 ```
 
-The homepage shows **everything**. It is a catalogue, not a shopfront window —
-a shopper who lands on the home page should be able to buy without navigating.
+The home page is a **sequence**, and its sections are numbered `01`–`09`
+because saying which part you are in is what stops a long scroll feeling
+shapeless. It shows six pairs near the end, not the whole catalogue: /shop has
+the filters and the pagination to handle a longer list properly, and a home
+page that reprints the shelf gives the shopper no reason to go there.
 
 The about page builds trust. It does not sell.
+
+`/wishlist` is `robots: { index: false }` — the list lives in one browser's
+storage, so no two visitors would see the same page and there is nothing for a
+crawler to index.
+
+---
+
+## The wishlist
+
+State lives in **`lib/wishlist.ts`** — `useSyncExternalStore` over
+`localStorage`. There is no Context, no Zustand, no Redux and no server user.
+Do not add one: this holds a list of strings.
+
+- **Slugs only, never product objects.** `data/products.json` is the source of
+  truth for price, stock and photography. Copying a product into storage means
+  a shopper seeing last month's price on a pair they saved. A slug that no
+  longer resolves simply drops out of the map.
+- **`getServerSnapshot` returns empty.** The server cannot know what is in a
+  browser's storage, so the first paint is the empty state and the real list
+  arrives on hydration. Reading `localStorage` during render is how this
+  feature ships a hydration error.
+- **`useIsWishlisted` subscribes to a boolean**, not the array — a card
+  re-renders only when its own pair flips, and nothing is keyed to position,
+  so filtering and sorting can never desync the hearts.
+- Parse defensively. localStorage can hold a half-written value, another app's
+  key, or a shape from a future version, and it throws outright in Safari
+  private mode.
+
+**The heart** sits at the photograph's top-right on a translucent paper chip.
+The chip is not decoration: a bare outline heart over a dark crop is invisible.
+It is a **sibling of the card's `<Link>`, never a child** — a `<button>` inside
+an `<a>` is invalid HTML and behaves inconsistently with a keyboard.
+
+Saving is celebrated — press, swell, one warm glow, an eight-particle burst on
+a compact radius. **Removing is not**: a small shrink and the fill drains away.
+Undoing something should never feel like an achievement. Burst offsets derive
+from the particle index, never `Math.random`, so server and client agree.
+
+**Destructive actions get a dialog, never `confirm()`.** Focus moves to Cancel
+— the safe choice — and returns to the opener on close; Escape and the backdrop
+both close it; body scroll is locked and restored to its previous value. Cancel
+is the filled button and the destructive one is plain: it should not be the
+most attractive thing on screen.
 
 ---
 
 ## Code rules
 
 - **Tailwind v4** with CSS-first `@theme`. No colour values in a config file.
-- Server Components by default. `'use client'` only for the catalogue filters,
-  the size run, the order button, and the motion presets in `lib/motion.ts`'s
-  orbit — things that hold state or touch the DOM.
+- Server Components by default. `'use client'` only where something holds
+  state or touches the DOM: the catalogue filters, the size run, the order
+  button, the product sheet, the wishlist components, the confirmation dialog,
+  the recommendation rail, and the motion presets. `ProductCard` is **not**
+  one of them — its
+  hover image swap is pure CSS, and keeping it on the server is why a grid of
+  twelve ships no JavaScript for the effect.
+- **One `ProductCard`, everywhere.** The grid, the rail and the wishlist all
+  render it. It takes an optional `sizes` so a narrow slot does not fetch a
+  grid-width image. A second card implementation is a second design system.
+- Horizontal rails are plain `overflow-x-auto` with scroll snapping — native
+  swipe, native keyboard, nothing intercepted, so vertical scrolling over the
+  row still moves the page. **Never autoplay one.**
 - `next/image` always, `fill` inside an `aspect-square` plate. Never a bare
   `<img>`.
 - No `<form>` elements — nothing on this site submits anywhere.
@@ -357,9 +464,21 @@ it. Nothing apologises.
 ## Before finishing any UI work
 
 1. Does it render at 360px with no horizontal scroll?
-2. Is every colour and size coming from a token? (`grep '#[0-9a-fA-F]' **/*.tsx`
-   must return nothing.)
-3. Is the grid still 2 / 3 / 4 columns, with square plates?
-4. Is the product name still grey and the price still ink?
+2. Is every colour and size coming from a token?
+   `grep -rE '#[0-9a-fA-F]{3,6}' components app --include=*.tsx` must return
+   nothing outside `lib/palette.ts`.
+3. Is the grid still **2 columns on a phone, 3 from `sm`**, with square plates?
+4. Is the caption still **name left in ink, price right in ink, colour below in
+   grey** — and not centred?
 5. Can you tab to every interactive element and see where you are?
 6. Does it still work with motion turned off, and with JavaScript disabled?
+7. Did you add a shadow, an accent colour, or a second inverted section? All
+   three are capped — check the rules above before assuming yours is the
+   exception.
+
+### Known debt
+
+The three permitted shadows write `rgba(11, 11, 11, …)` inline rather than
+`color-mix(in srgb, var(--color-ink) …)`. It is ink at low opacity either way,
+but they are the only colour literals left in a component. Worth folding into
+tokens next time one of those three files is opened.

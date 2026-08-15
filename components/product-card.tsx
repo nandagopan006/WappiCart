@@ -34,10 +34,20 @@ import type { Product } from "@/lib/products";
  * product page.
  *
  * ── The second view ──────────────────────────────────────────────────────
- * `images[1]` is stacked behind `images[0]` and cross-fades in on hover. Both
+ * `images[1]` is stacked over `images[0]` and dissolves in on hover. Both
  * occupy the same square plate, so there is no reflow and no ratio change to
  * flicker through. The swap is pure CSS — this stays a Server Component and
  * ships no JavaScript for the effect.
+ *
+ * **Only the top layer animates.** Fading the primary out while fading the
+ * secondary in is the obvious way to write this and it is why the swap used
+ * to flash: halfway through, both images sit at 50% over a pale plate and the
+ * composite goes washed-out. Holding the primary fully opaque underneath
+ * means the stack is never less than opaque, so there is nothing to dip.
+ *
+ * `--ease-fade`, not `--ease-settle`: the settle curve reaches ~70% in the
+ * first fifth of its duration, which on opacity reads as a pop rather than a
+ * dissolve. 700ms, symmetric, so leaving takes as long as arriving.
  *
  * Rendering the second image is also how it is preloaded: next/image loads it
  * when the tile scrolls into view, so the first hover is never the moment it
@@ -71,17 +81,15 @@ export function ProductCard({
           {/* The scaling layer. Both views sit inside it, so the pair grows
               as one rather than the two crossfading at different sizes. */}
           <div className="tile-media absolute inset-0">
+            {/* Never fades. See the note above — it is the opaque ground the
+                second view dissolves onto. */}
             <Image
               src={product.image}
               alt={product.alt}
               fill
               priority={priority}
               sizes={sizes}
-              className={
-                swap
-                  ? "object-cover transition-opacity duration-500 ease-(--ease-settle) group-hover:opacity-0"
-                  : "object-cover"
-              }
+              className="object-cover"
             />
 
             {swap ? (
@@ -93,14 +101,28 @@ export function ProductCard({
                 alt=""
                 fill
                 sizes={sizes}
-                className="object-cover opacity-0 transition-opacity duration-500 ease-(--ease-settle) group-hover:opacity-100"
+                className="object-cover opacity-0 transition-opacity duration-700 ease-(--ease-fade) group-hover:opacity-100"
               />
             ) : null}
           </div>
         </div>
 
-        <div className="mt-3 flex items-baseline justify-between gap-3">
-          <h3 className="text-caption text-ink truncate uppercase">{product.name}</h3>
+        {/* ── Why this wraps rather than truncates ──────────────────────
+            This row used to be `truncate` + `shrink-0`, and it was the source
+            of the page's horizontal overflow on phones. `truncate` sets
+            `white-space: nowrap`, and a flex child's default `min-width: auto`
+            resolves to its min-content size — with nowrap, that is the whole
+            string on one line. The name therefore could not shrink, pushed the
+            price outward, and made the row wider than the card it sits in. A
+            2-up grid card is 136–183px on a phone; this caption needs ~212px
+            with a struck-through MRP.
+
+            `min-w-0` lets the name shrink, and `flex-wrap` lets the price drop
+            to its own line rather than the name ellipsing away. On a desktop
+            card both still sit on one baseline exactly as before — the wrap
+            only engages where there is genuinely no room. */}
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <h3 className="text-caption text-ink min-w-0 uppercase">{product.name}</h3>
           <Price price={product.price} mrp={product.mrp} className="shrink-0 tabular-nums" />
         </div>
         <p className="text-caption text-grey mt-1 uppercase">{product.colour}</p>
