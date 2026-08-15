@@ -22,6 +22,14 @@
      button. Never a background, never a border. */
   --color-whatsapp: #1fa855;
 
+  /* The saved state, and nothing else — the filled heart, its burst
+     and its glow. A deep warm red rather than a signal red: on a
+     page of neutrals a bright #f00 reads as an error, and this has
+     to read as affection. It is a functional accent in exactly the
+     way the WhatsApp green is, which is why it earns a token. Never
+     a heading, never a price, never a background. */
+  --color-love: #a32c23;
+
   /* ── Type · one family, five sizes ───────────────────────── */
   /* A single geometric sans does every job. A second display face
      is what turns a catalogue into a magazine. */

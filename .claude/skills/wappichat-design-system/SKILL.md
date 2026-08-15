@@ -8,8 +8,11 @@ description: The design system, coding rules, and content voice for the WappiCar
 A shoe storefront. Browsing on the web, ordering on WhatsApp.
 
 The site is a plain white retail catalogue. Dense grids of product photographs,
-tiny tracked captions, one hairline, no hero. The shoes are the only colour on
-the page — everything around them gets out of the way.
+tiny tracked captions, one hairline. The shoes are the only colour on the page —
+everything around them gets out of the way.
+
+The one exception is the home page's opening banner, which runs full-bleed at
+the height of the viewport. Every other page opens on stock.
 
 This file is the only design system in the repo. If you find a second one,
 delete it.
@@ -67,8 +70,8 @@ proportion seen, `Showing 6 of 12`, and a `Load more (6)` button.
 
 ## Colour
 
-Five values plus the green. They live in `app/globals.css` under `@theme`.
-**Never write a hex code in a `.tsx` file.**
+Five neutrals plus two functional accents. They live in `app/globals.css`
+under `@theme`. **Never write a hex code in a `.tsx` file.**
 
 ```
 --color-paper     #FFFFFF   the page
@@ -76,7 +79,9 @@ Five values plus the green. They live in `app/globals.css` under `@theme`.
 --color-ink       #0B0B0B   headings, prices, buttons, the dark band
 --color-grey      #757575   captions, secondary text
 --color-line      #E8E8E6   hairlines and rules
---color-whatsapp  #1FA855   the 16px button glyph, nothing else
+
+--color-whatsapp  #1FA855   the 16px order-button glyph, nothing else
+--color-love      #A32C23   the saved heart, its burst and its glow
 ```
 
 The page background is flat `--color-paper`. There is no gradient anywhere on
@@ -110,11 +115,34 @@ colour.
 **Hairlines** are `--color-line`. Never pure black, never an opacity trick on
 grey.
 
-**WhatsApp green** appears once: the 16px glyph inside the order button. Never
-a background, never a border, never a section. It works because it is rare.
+### The two accents, and the rule that governs both
 
-Forbidden: any seventh colour, gradients, glassmorphism, coloured shadows,
-drop shadows of any kind, neon, dark mode, rounded corners above 0px.
+Green and red are **functional, not decorative**. Each marks exactly one
+state, each appears at roughly 16px, and neither is ever a background, a
+border, a heading, a price or a section. They work because they are rare — the
+moment either one is used to make something "pop", both stop meaning anything.
+
+**WhatsApp green** appears once: the glyph inside the order button.
+
+**Love red** appears on the saved heart, and on the burst and glow that fire
+when a pair is saved. It is a deep warm red rather than a signal red: on a
+page of neutrals a bright `#f00` reads as an error, and this has to read as
+affection.
+
+An eighth colour needs a state that neither of these covers. There is not one.
+
+Forbidden: gradients (except the two documented glows), glassmorphism as a
+surface treatment, coloured shadows, neon, dark mode, rounded corners above 0px
+on anything that is not a control.
+
+### Where shadows are allowed
+
+Three places, and nowhere else: the mobile dock, the wishlist chip, and the
+confirmation dialog. All three genuinely float over content, and without any
+separation they read as pasted onto whatever is behind them. Every one is
+tinted with ink at low opacity, never black.
+
+**Product tiles never get a shadow.** They sit flush on the page.
 
 ### The two hex codes that are allowed to exist
 
