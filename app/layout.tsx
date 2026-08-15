@@ -11,12 +11,19 @@ import { shop } from "@/lib/shop";
 
 import "./globals.css";
 
-/* One family, three weights, latin only.
-   A retail catalogue is led by its photographs — a second display face would
-   only compete with them. */
+/* One family, latin only. A retail catalogue is led by its photographs — a
+   second display face would only compete with them.
+
+   Loaded as a VARIABLE font: naming no `weight` makes next/font ship Jost's
+   variable cut with its whole 100–900 axis, instead of three fixed instances.
+   That is what lets the hero headline interpolate its weight under the cursor
+   — with static 300/400/500 faces the browser can only snap between the three,
+   and a weight animation reads as three hard steps. Every `font-light`,
+   `font-normal` and `font-medium` on the site resolves to the same value it
+   did before; one file replaces three, so this is also slightly less to
+   download. */
 const jost = Jost({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
   display: "swap",
   variable: "--font-jost",
 });

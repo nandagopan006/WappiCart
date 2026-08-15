@@ -1,12 +1,17 @@
 import { Marquee } from "@/components/marquee";
-import { SplitText } from "@/components/split-text";
+import { ProximityText } from "@/components/proximity-text";
+import { ScrollReveal } from "@/components/scroll-reveal";
 
 /**
  * The page stops selling for one screen.
  *
  * Two lines at display size and nothing else — no image, no button, no
- * supporting paragraph. It is the last place on the site that splits its
- * type, and it earns it by being the only thing on screen.
+ * supporting paragraph. It earns the size by being the only thing on screen.
+ *
+ * The break between the lines is authored, not left to the box: `\n` in the
+ * string forces it, so the statement reads as two sentences at every width
+ * instead of running together into one when the container is wide enough to
+ * hold it.
  *
  * Underneath, the brand line drifts sideways as the section passes. Scroll-
  * driven rather than looping: nothing moves while the visitor is still
@@ -23,11 +28,11 @@ export function BrandStatement({ index }: { index: number }) {
           <span>What we are for</span>
         </p>
 
-        <h2 className="text-display text-ink mt-8 font-light uppercase">
-          <SplitText by="line" className="block">
+        <ScrollReveal className="mt-8">
+          <ProximityText as="h2" className="text-display text-ink font-light uppercase">
             {"Less noise.\nBetter pairs."}
-          </SplitText>
-        </h2>
+          </ProximityText>
+        </ScrollReveal>
       </div>
 
       <Marquee mode="scroll" amount={220} className="mt-14 md:mt-20">

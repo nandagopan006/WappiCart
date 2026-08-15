@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ImageReveal } from "@/components/image-reveal";
 import { Magnetic } from "@/components/magnetic";
+import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { formatPrice, pairsInStock, products, type Product } from "@/lib/products";
 
@@ -82,7 +83,11 @@ export function HomeHero({ product }: { product: Product }) {
       <div className="max-w-page mx-auto px-4 md:px-8">
         <div className="grid gap-6 pt-12 pb-10 md:grid-cols-12 md:gap-8 md:pt-16 md:pb-12">
           <ScrollReveal className="md:col-span-7">
-            <h1 className="text-display text-ink font-light uppercase">Every pair</h1>
+            {/* The letters rise toward the cursor. Desktop only — the
+                component attaches nothing on a touch device. */}
+            <ProximityText as="h1" className="text-display text-ink font-light uppercase">
+              Every pair
+            </ProximityText>
           </ScrollReveal>
 
           <ScrollReveal className="md:col-span-4 md:col-start-9 md:self-end" delay={0.12}>

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ImageReveal } from "@/components/image-reveal";
+import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { cx } from "@/lib/cx";
 import { formatPrice, type Category, type Product } from "@/lib/products";
@@ -88,7 +89,9 @@ export function CategoryStory({
 
           <ScrollReveal className="mt-5">
             <Link href={href} className="group block focus-visible:outline-offset-4">
-              <h2 className="text-display text-ink font-light uppercase">{category}</h2>
+              <ProximityText as="h2" className="text-display text-ink font-light uppercase">
+                {category}
+              </ProximityText>
             </Link>
 
             <p className="text-body text-grey mt-5 max-w-[34ch]">{blurb}</p>

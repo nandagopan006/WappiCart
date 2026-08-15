@@ -8,6 +8,7 @@ import { HomeHero } from "@/components/home-hero";
 import { Magnetic } from "@/components/magnetic";
 import { ProductGrid } from "@/components/product-grid";
 import { ProductStory } from "@/components/product-story";
+import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { SectionHeading } from "@/components/section-heading";
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
@@ -164,7 +165,9 @@ export default function HomePage() {
             <span>No cart. No checkout.</span>
           </p>
 
-          <p className="text-display text-ink mt-8 font-light uppercase">Order in a message</p>
+          <ProximityText as="h2" className="text-display text-ink mt-8 font-light uppercase">
+            Order in a message
+          </ProximityText>
 
           <div className="mt-10 grid gap-8 md:mt-14 md:grid-cols-12">
             <p className="text-lead text-grey md:col-span-5">
