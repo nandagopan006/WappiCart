@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
+import { WishlistLink } from "@/components/wishlist-link";
 import { CATEGORIES } from "@/lib/products";
 import { shop } from "@/lib/shop";
 import { buildChatLink } from "@/lib/whatsapp";
@@ -35,6 +36,9 @@ export function SiteHeader() {
             <Link href="/about" className="link-quiet text-grey hover:text-ink hidden sm:block">
               About
             </Link>
+            {/* Shown at every width — the heart is on every tile, so the way
+                back to what it saved has to be reachable on a phone too. */}
+            <WishlistLink />
             <a
               href={buildChatLink()}
               target="_blank"

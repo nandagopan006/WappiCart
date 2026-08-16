@@ -38,7 +38,7 @@ import { buildChatLink } from "@/lib/whatsapp";
  *   SPREAD          three pairs in an editorial composition
  *   SHELVES         four full-bleed category tiles, edge to edge
  *   STATEMENT       display type, no product
- *   EVERYTHING      all twelve, because the home page is the catalogue
+ *   SHELF           six pairs, then the way through to all of them
  *   ORDER           the only thing the site has been asking for
  *
  * Every product shown is a real link to a real product page, and every
@@ -81,6 +81,11 @@ export default function HomePage() {
   /* Three pairs for the spread, none of them already carrying a section. */
   const spent = new Set([heroPair.slug, storyPair.slug, sneakers.lead.slug, loafers.lead.slug]);
   const spread = products.filter((p) => !spent.has(p.slug)).slice(0, 3);
+
+  /* Six for the closing grid — two full rows of the three-up layout. The home
+     page shows a representative slice and hands the rest to /shop, which has
+     the filters and the load-more to handle a longer list properly. */
+  const shelfPreview = products.slice(0, 6);
 
   const shelves: AudienceEntry[] = CATEGORIES.map((category) => ({
     category,
@@ -139,17 +144,18 @@ export default function HomePage() {
 
       <BrandStatement index={7} />
 
-      {/* The catalogue. Every pair, in one grid, because the home page is the
-          shop and not a window onto it. */}
+      {/* A window onto the shelf rather than the shelf itself: six pairs, then
+          the way through to all of them. Two full rows of the three-up grid,
+          so the section never ends on an orphan tile. */}
       <section className="max-w-page mx-auto px-4 pt-section md:px-8">
-        <SectionHeading index={8} meta={`${products.length} styles`}>
-          Everything in stock
+        <SectionHeading index={8} meta={`${shelfPreview.length} of ${products.length}`}>
+          On the shelf
         </SectionHeading>
-        <ProductGrid products={products} className="mt-8" priorityCount={0} />
+        <ProductGrid products={shelfPreview} className="mt-8" priorityCount={0} />
 
         <p className="text-caption text-grey border-line mt-12 border-t pt-6 uppercase">
           <Link href="/shop" className="link-quiet text-ink">
-            Filter by size and price →
+            See all {products.length} styles →
           </Link>
         </p>
       </section>

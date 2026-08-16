@@ -22,6 +22,14 @@
      button. Never a background, never a border. */
   --color-whatsapp: #1fa855;
 
+  /* The saved state, and nothing else — the filled heart, its burst
+     and its glow. A deep warm red rather than a signal red: on a
+     page of neutrals a bright #f00 reads as an error, and this has
+     to read as affection. It is a functional accent in exactly the
+     way the WhatsApp green is, which is why it earns a token. Never
+     a heading, never a price, never a background. */
+  --color-love: #a32c23;
+
   /* ── Type · one family, five sizes ───────────────────────── */
   /* A single geometric sans does every job. A second display face
      is what turns a catalogue into a magazine. */
@@ -73,8 +81,17 @@
   --container-page: 1400px;
 
   /* ── Motion ──────────────────────────────────────────────── */
-  /* One easing, and almost nothing uses it. */
+  /* The easing for anything that MOVES. Fast away, long soft
+     landing, no overshoot. */
   --ease-settle: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The easing for anything that only CHANGES OPACITY.
+     `--ease-settle` is wrong for a fade: it reaches ~70% in the
+     first fifth of its duration, so an image appears almost at
+     once and then creeps — which reads as a pop, not a dissolve.
+     This is symmetric, so a cross-fade takes as long to arrive as
+     it does to leave. Photography only; nothing that travels. */
+  --ease-fade: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 @layer components {
