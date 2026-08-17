@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
 import { WishlistLink } from "@/components/wishlist-link";
+import { Wordmark } from "@/components/wordmark";
 import { CATEGORIES } from "@/lib/products";
 import { shop } from "@/lib/shop";
 import { buildChatLink } from "@/lib/whatsapp";
@@ -25,11 +26,10 @@ export function SiteHeader() {
         {/* Row one — the wordmark, centred, with the order link held to the
             right edge. */}
         <div className="relative flex h-14 items-center justify-center">
-          <Link
-            href="/"
-            className="text-title text-ink font-medium tracking-[0.3em] uppercase"
-          >
-            {shop.name}
+          {/* The mark. Defined once in `Wordmark` so the bar and the brand
+              intro can never drift apart. */}
+          <Link href="/" className="text-ink" aria-label={`${shop.name} — home`}>
+            <Wordmark />
           </Link>
 
           <div className="text-caption absolute right-0 flex items-center gap-4 uppercase">

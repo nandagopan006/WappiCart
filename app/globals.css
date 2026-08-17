@@ -94,7 +94,212 @@
   --ease-fade: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
+/* Typed so the browser interpolates the reveal radius as a real
+   percentage rather than swapping strings — an untyped custom
+   property animates in steps and the growing hole would stutter. */
+@property --intro-reveal {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
 @layer components {
+  /* ── The wordmark ────────────────────────────────────────────
+     The one heavy thing on a page built from hairlines.
+
+     It used to be weight 500 at 0.3em tracking, which is the same
+     treatment as the nav links beside it only larger — so it read
+     as another label rather than as the shop's mark. Wide-tracked
+     caps are also the single most common header on the internet.
+
+     Now it goes the other way: weight 600, tracking pulled back to
+     nothing, set a little larger. Uppercase at this weight needs no
+     extra spacing to breathe, and a tight heavy mark against 11px
+     tracked captions is what gives the bar a hierarchy at all.
+
+     Weight 600 is only reachable because Jost is loaded variable —
+     with the old static 300/400/500 faces this would have snapped
+     back to 500 and looked identical. */
+  .wordmark {
+    font-size: clamp(1.375rem, 1.1964rem + 0.7619vw, 1.75rem); /* 22 → 28 */
+    letter-spacing: -0.01em;
+    line-height: 1;
+    /* Numerals never appear here, but the mark must not reflow if the
+       shop name ever gains one. */
+    font-variant-numeric: lining-nums;
+  }
+
+  /* The two halves of the lockup.
+     WAPPI is the coined half and carries the weight; CART is the
+     category noun and steps back to 300. The contrast is the mark —
+     it is what makes this read as a logo rather than as the page
+     title set slightly larger.
+
+     A 300/600 spread inside one word is only possible because Jost
+     is loaded variable. It is the one place on the site that uses
+     two weights in a single line, which is precisely why it reads
+     as the brand and nothing else does. */
+  .wordmark-brand {
+    font-weight: 600;
+  }
+
+  .wordmark-category {
+    font-weight: 300;
+    /* The light half reads optically tighter against the heavy half;
+       a hair of space restores an even colour across the word. */
+    letter-spacing: 0.015em;
+  }
+
+  /* ── The brand intro ─────────────────────────────────────────
+     A first-visit curtain. Everything here exists to make sure it
+     cannot become a way for the site to be unreachable. */
+
+  /* The mark, larger than the bar's but proportionally identical —
+     only the size changes, so weights and tracking are untouched
+     and the assembled logo is the same lockup. */
+  .brand-intro-mark .wordmark {
+    font-size: clamp(2rem, 9vw, 4.5rem);
+  }
+
+  /* ── The reveal ──────────────────────────────────────────────
+     A hole opens at the centre of the curtain and grows past the
+     corners, so the site is uncovered outward from the logo that
+     was just standing there — the page emerges from the brand
+     rather than the brand being taken off the page.
+
+     The mask is applied only while revealing. Left on permanently
+     it would put a soft transparent spot in the middle of the
+     curtain for the whole intro, which is exactly the artefact it
+     is meant to avoid. */
+  .brand-intro.is-revealing {
+    -webkit-mask-image: radial-gradient(
+      circle at 50% 50%,
+      transparent var(--intro-reveal),
+      black calc(var(--intro-reveal) + 7%)
+    );
+    mask-image: radial-gradient(
+      circle at 50% 50%,
+      transparent var(--intro-reveal),
+      black calc(var(--intro-reveal) + 7%)
+    );
+  }
+
+  /* ── Start states ────────────────────────────────────────────
+     The halves must be apart from the FIRST PAINT, not from when
+     GSAP gets around to it. Without this the browser paints the
+     assembled logo at full opacity, then the bundle lands and it
+     is snapped to opacity 0 to begin — so on a real first load,
+     with fonts and hydration ahead of it, the whole intro reads as
+     "the brand name just sat there".
+
+     This is the same contract every other animation on the site
+     uses: hidden in CSS behind `html.js`, never hidden by GSAP,
+     always carrying a failsafe so a bundle that never arrives
+     cannot leave a blank curtain.
+
+     Scoped to `.brand-intro-mark`, not the whole curtain: the wall
+     behind it is built from the same component, and a looser
+     selector would throw every tiled logo off to the sides where
+     nothing would ever animate them back. */
+  .js .brand-intro-mark [data-wordmark-brand],
+  .js .brand-intro-mark [data-wordmark-category] {
+    opacity: 0;
+    filter: blur(18px);
+    animation: brand-half-failsafe 400ms var(--ease-fade) 4s forwards;
+  }
+
+  /* These must match GSAP's first keyframe exactly, lean and stretch
+     included. Any difference is a one-frame jump at the moment the
+     bundle takes over — small, but it is the frame the eye is on. */
+  .js .brand-intro-mark [data-wordmark-brand] {
+    transform: translateX(-34vw) translateY(10px) skewX(-7deg) scaleX(1.06);
+  }
+
+  .js .brand-intro-mark [data-wordmark-category] {
+    transform: translateX(34vw) translateY(10px) skewX(7deg) scaleX(1.06);
+  }
+
+  /* ── The wall ────────────────────────────────────────────────
+     The mark repeated across the canvas in the palette's faintest
+     value, drifting. It is texture, not content — the hero lockup
+     in front is the one anyone reads.
+
+     Set in --color-line, the same hairline value every division on
+     the site uses, so the wall is the brand's own material at low
+     volume rather than grey text turned down. */
+  .brand-intro-wall .wordmark {
+    font-size: clamp(1.5rem, 4.4vw, 3.25rem);
+  }
+
+  @keyframes brand-half-failsafe {
+    to {
+      opacity: 1;
+      /* `none`, not `blur(0)` — a zero blur still routes the element
+         through the filter pipeline and renders type slightly soft. */
+      filter: none;
+      transform: none;
+    }
+  }
+
+  /* The one secondary detail, and it is the site's own material:
+     a hairline. Every division on WappiCart is a 1px line in
+     --color-line, so a rule drawing itself out of the centre under
+     the finished mark is the brand signing its name rather than an
+     effect borrowed from somewhere else. */
+  .brand-intro-rule {
+    height: 1px;
+    background-color: var(--color-line);
+    transform: scaleX(0);
+    transform-origin: center;
+  }
+
+  /* The impact. A single soft ring, fired once at the meeting
+     point and gone in under 400ms. Never a glow — it reads as air
+     displaced, not light emitted. */
+  .brand-intro-pulse {
+    border: 1px solid var(--color-line);
+    border-radius: 9999px;
+    opacity: 0;
+  }
+
+  /* Hidden from the first frame for anyone who has seen it. The
+     class is stamped on <html> by an inline script in layout.tsx
+     before paint, so a returning visitor never sees a flash. */
+  .intro-seen .brand-intro {
+    display: none;
+  }
+
+  /* The failsafe. If the bundle never arrives, or GSAP throws, or
+     the timeline is interrupted, the curtain still lifts and the
+     site is reachable. It runs regardless of script and the real
+     timeline finishes long before it. */
+  .brand-intro {
+    animation: brand-intro-failsafe 400ms var(--ease-fade) 4.4s forwards;
+  }
+
+  @keyframes brand-intro-failsafe {
+    to {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+  }
+
+  /* Nothing scrolls behind the curtain — but the lock has to be
+     able to release itself. React removes this class, and if that
+     never happens the animation restores scrolling anyway. A page
+     that cannot scroll is indistinguishable from a broken site. */
+  .intro-running body {
+    overflow: hidden;
+    animation: intro-scroll-unlock 0s linear 4.6s forwards;
+  }
+
+  @keyframes intro-scroll-unlock {
+    to {
+      overflow: visible;
+    }
+  }
+
   /* ── The section index ───────────────────────────────────────
      A numbered label pinned to the left margin with a hairline under it.
 
@@ -331,6 +536,17 @@
     }
 
     .js [data-motion-split] [data-piece] {
+      transform: none !important;
+      animation: none !important;
+    }
+
+    /* The intro plays no collision under reduced motion, so nothing
+       would ever animate these back — the curtain would hold a blank
+       canvas until the failsafe. The mark is simply present. */
+    .js .brand-intro-mark [data-wordmark-brand],
+    .js .brand-intro-mark [data-wordmark-category] {
+      opacity: 1 !important;
+      filter: none !important;
       transform: none !important;
       animation: none !important;
     }

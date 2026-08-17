@@ -166,6 +166,7 @@ download than three static ones.
 
 | Token | Size | Use |
 |---|---|---|
+| `.wordmark` | 20 → 26px, weight 600, tracking -0.01em, UPPERCASE | the shop's mark, header only |
 | `text-display` | 36 → 72px, weight 300, tracking -0.03em, UPPERCASE | **home page only** |
 | `text-lead` | 17 → 20px | the one paragraph allowed under a display line |
 | `text-title` | 20 → 24px | page and section titles, product name on the sheet |

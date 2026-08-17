@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Jost } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { BrandIntro } from "@/components/brand-intro";
 import { MobileNav } from "@/components/mobile-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -70,7 +71,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           from a visitor whose bundle failed to load. See globals.css. */}
       <head>
         <script
-          dangerouslySetInnerHTML={{ __html: `document.documentElement.classList.add('js')` }}
+          dangerouslySetInnerHTML={{
+            /* Runs before first paint. The `intro-seen` stamp is what stops a
+               returning visitor seeing a frame of the brand intro — decided
+               in an effect it would paint first and vanish, which is a flash
+               on every visit after the first. Wrapped, because storage throws
+               outright in private mode and a broken head script would take
+               the `js` class down with it. */
+            __html:
+              "document.documentElement.classList.add('js');" +
+              /* Development replays the intro on every load, so the flag is
+                 not consulted at all — reading it here would hide the curtain
+                 before first paint and the component could only bring it back
+                 with a visible pop. Production keeps first-visit-only. */
+              (process.env.NODE_ENV === "development"
+                ? ""
+                : "try{if(localStorage.getItem('wappicart:intro:v1'))" +
+                  "document.documentElement.classList.add('intro-seen')}catch(e){}"),
+          }}
         />
       </head>
       <body className="bg-paper text-ink font-sans">
@@ -80,6 +98,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to the shoes
         </a>
+        {/* First visit only. Lives in the layout so it cannot replay when the
+            shopper moves between routes — the layout never remounts. */}
+        <BrandIntro />
         <SmoothScroll />
         <SiteHeader />
         <main id="main">{children}</main>
