@@ -1,5 +1,4 @@
 import { cx } from "@/lib/cx";
-import { shop } from "@/lib/shop";
 
 /**
  * The shop's mark. One definition, used by the header and by the brand intro.
@@ -21,12 +20,21 @@ import { shop } from "@/lib/shop";
  * The visual rules live in `.wordmark*` in globals.css.
  */
 
-const [, brand, category] = /^([A-Z][a-z]+)([A-Z].*)$/.exec(shop.name) ?? ["", shop.name, ""];
+/**
+ * The shop name is editable in the admin now, so the split is computed from
+ * whatever name it is given rather than from a module-level constant. The
+ * default keeps every caller that does not have the name to hand — the brand
+ * intro's inner render, a Storybook-less preview — rendering the real lockup
+ * instead of an empty span.
+ */
+export function splitWordmark(name: string) {
+  const [, brand, category] = /^([A-Z][a-z]+)([A-Z].*)$/.exec(name) ?? ["", name, ""];
+  return { brand, category } as const;
+}
 
-/** The two halves, for anything that needs to address them separately. */
-export const WORDMARK_PARTS = { brand, category } as const;
+export function Wordmark({ name = "WappiCart", className }: { name?: string; className?: string }) {
+  const { brand, category } = splitWordmark(name);
 
-export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cx("wordmark uppercase", className)}>
       <span data-wordmark-brand className="wordmark-brand">

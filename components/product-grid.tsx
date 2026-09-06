@@ -1,6 +1,6 @@
 import { ProductCard } from "@/components/product-card";
 import { cx } from "@/lib/cx";
-import type { Product } from "@/lib/products";
+import type { Product } from "@/lib/catalogue";
 
 /**
  * The grid every page uses. Two columns on a phone, three from `sm` up.

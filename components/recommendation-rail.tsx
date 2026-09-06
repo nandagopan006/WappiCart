@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/product-card";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { cx } from "@/lib/cx";
 import { prefersReducedMotion } from "@/lib/motion";
-import type { Product } from "@/lib/products";
+import type { Product } from "@/lib/catalogue";
 
 /**
  * A short edit of pairs to keep looking at, browsed sideways.

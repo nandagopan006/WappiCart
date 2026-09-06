@@ -13,7 +13,7 @@ import {
 
 import { EASE_SETTLE_POINTS } from "@/lib/motion";
 import { cx } from "@/lib/cx";
-import { buildChatLink } from "@/lib/whatsapp";
+import { buildChatLink, type ShopContact } from "@/lib/whatsapp";
 
 /**
  * The mobile dock. Phones only — `md:hidden` on both the dock and its spacer.
@@ -67,7 +67,9 @@ type Item = {
   icon: ReactNode;
 };
 
-export function MobileNav() {
+/* The shop arrives as a prop rather than an import: this is a Client
+   Component, and `lib/shop.ts` reads the database. */
+export function MobileNav({ shop }: { shop: ShopContact }) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
 
@@ -91,7 +93,7 @@ export function MobileNav() {
     { label: "Home", href: "/", icon: <HomeIcon /> },
     { label: "Shop", href: "/shop", icon: <ShopIcon /> },
     { label: "About", href: "/about", icon: <AboutIcon /> },
-    { label: "Order", href: buildChatLink(), action: true, icon: <ChatIcon /> },
+    { label: "Order", href: buildChatLink(shop), action: true, icon: <ChatIcon /> },
   ];
 
   /* `/p/[slug]` counts as the shop — a shopper on a product page came from the

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Price } from "@/components/price";
 import { WishlistButton } from "@/components/wishlist-button";
-import type { Product } from "@/lib/products";
+import type { Product } from "@/lib/catalogue";
 
 /**
  * One pair in the grid. Photograph, name, price. Nothing else.

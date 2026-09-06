@@ -6,14 +6,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ProductGrid } from "@/components/product-grid";
 import { SizeRun } from "@/components/size-run";
 import {
-  CATEGORIES,
   PRICE_BANDS,
   inPriceBand,
   type Category,
   type PriceBandId,
   type Product,
-} from "@/lib/products";
-import { buildStockEnquiryLink } from "@/lib/whatsapp";
+  type Shelf,
+} from "@/lib/catalogue";
+import { buildStockEnquiryLink, type ShopContact } from "@/lib/whatsapp";
 import { cx } from "@/lib/cx";
 
 /**
@@ -62,15 +62,37 @@ type Panel = "filter" | "sort" | null;
  */
 const PAGE_SIZE = 6;
 
-export function Catalog({ products, sizesInStock }: { products: Product[]; sizesInStock: number[] }) {
-  /* The header's category links arrive as /shop?c=loafers, so the filter is
-     already applied when the page opens. Validated against CATEGORIES rather
-     than trusted — ?c=anything would otherwise show an empty shelf and read as
-     a bug. */
+export function Catalog({
+  products,
+  shelves,
+  sizesInStock,
+  shop,
+  initialCategory,
+}: {
+  products: Product[];
+  /* The visible shelves, in the admin's order. Sent from the server rather
+     than imported: they are rows in the database now, and this runs in the
+     browser. */
+  shelves: Shelf[];
+  sizesInStock: number[];
+  /* Only used by the empty state's "message us" link. A Client Component
+     cannot read `lib/shop`, which is server-only now. */
+  shop: ShopContact;
+  /**
+   * The shelf `?c=` asked for, already checked by the server.
+   *
+   * Passed in rather than read here, so the first paint on the server already
+   * has the right products in it. Reading the URL inside this component meant
+   * the server could only render a placeholder — which left the shop page
+   * empty for search engines and for anyone without JavaScript.
+   */
+  initialCategory?: Category | null;
+}) {
+  /* Kept so a later click on a header shelf link — same route, no remount —
+     still moves the filter. The first render uses what the server worked out. */
   const requested = useSearchParams().get("c");
-  const initialCategory = CATEGORIES.find((c) => c === requested) ?? null;
 
-  const [category, setCategory] = useState<Category | null>(initialCategory);
+  const [category, setCategory] = useState<Category | null>(initialCategory ?? null);
   const [sizes, setSizes] = useState<number[]>([]);
   const [band, setBand] = useState<PriceBandId | null>(null);
   const [sort, setSort] = useState<SortKey>("featured");
@@ -96,8 +118,8 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
      once would go stale and the click would silently do nothing. This keeps
      the URL authoritative whenever it changes. */
   useEffect(() => {
-    setCategory(CATEGORIES.find((c) => c === requested) ?? null);
-  }, [requested]);
+    setCategory(shelves.find((s) => s.slug === requested)?.slug ?? null);
+  }, [requested, shelves]);
 
   const visible = useMemo(() => {
     /* Shelf order — the sequence in products.json — is the tie-breaker under
@@ -200,14 +222,20 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
 
       <div ref={barRef} className="border-line border-b">
         <div className="text-caption flex items-center justify-between gap-4 py-3 uppercase">
-          {/* The shelves stay in the open from sm up. Five names, one click. */}
+          {/* The shelves stay in the open from sm up. One click each, and it
+              wraps rather than scrolls now that the shop can have any number
+              of them. */}
           <div className="hidden flex-wrap items-center gap-x-6 gap-y-1 sm:flex">
             <FilterLabel active={category === null} onClick={() => setCategory(null)}>
               all
             </FilterLabel>
-            {CATEGORIES.map((c) => (
-              <FilterLabel key={c} active={category === c} onClick={() => setCategory(c)}>
-                {c}
+            {shelves.map((shelf) => (
+              <FilterLabel
+                key={shelf.slug}
+                active={category === shelf.slug}
+                onClick={() => setCategory(shelf.slug)}
+              >
+                {shelf.name}
               </FilterLabel>
             ))}
           </div>
@@ -258,6 +286,7 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
               <FilterPanel
                 category={category}
                 onCategory={setCategory}
+                shelves={shelves}
                 sizes={sizes}
                 onSizes={setSizes}
                 sizesInStock={sizesInStock}
@@ -287,7 +316,16 @@ export function Catalog({ products, sizesInStock }: { products: Product[]; sizes
             />
           </>
         ) : (
-          <EmptyResult category={category} sizes={sizes} band={band} onClear={clearFilters} />
+          <EmptyResult
+            /* The shelf's name, not its slug: this text is read by a shopper
+               and copied into a WhatsApp message. A slug reads as
+               "running-shoes" in both. */
+            category={category === null ? null : (shelfName(shelves, category) ?? category)}
+            sizes={sizes}
+            band={band}
+            shop={shop}
+            onClear={clearFilters}
+          />
         )}
       </div>
     </section>
@@ -456,6 +494,7 @@ function PanelLabel({ children }: { children: React.ReactNode }) {
 function FilterPanel({
   category,
   onCategory,
+  shelves,
   sizes,
   onSizes,
   sizesInStock,
@@ -468,6 +507,7 @@ function FilterPanel({
 }: {
   category: Category | null;
   onCategory: (c: Category | null) => void;
+  shelves: Shelf[];
   sizes: number[];
   onSizes: (s: number[]) => void;
   sizesInStock: number[];
@@ -480,17 +520,21 @@ function FilterPanel({
 }) {
   return (
     <div className="grid gap-8 sm:grid-cols-2 lg:gap-16">
-      {/* Phone only. From sm up these five live in the row above, and two
-          category pickers on one screen is one too many. */}
+      {/* Phone only. From sm up these live in the row above, and two category
+          pickers on one screen is one too many. */}
       <div className="sm:hidden">
         <PanelLabel>Shelf</PanelLabel>
         <div className="text-caption flex flex-wrap items-center gap-x-5 gap-y-1">
           <FilterLabel active={category === null} onClick={() => onCategory(null)}>
             all
           </FilterLabel>
-          {CATEGORIES.map((c) => (
-            <FilterLabel key={c} active={category === c} onClick={() => onCategory(c)}>
-              {c}
+          {shelves.map((shelf) => (
+            <FilterLabel
+              key={shelf.slug}
+              active={category === shelf.slug}
+              onClick={() => onCategory(shelf.slug)}
+            >
+              {shelf.name}
             </FilterLabel>
           ))}
         </div>
@@ -555,21 +599,33 @@ function SortPanel({ sort, onSort }: { sort: SortKey; onSort: (s: SortKey) => vo
   );
 }
 
-/** An empty screen is an invitation to act, so it points at WhatsApp. */
+/** The shelf's readable name, for prose. Falls back to the slug. */
+function shelfName(shelves: Shelf[], slug: string): string | undefined {
+  return shelves.find((s) => s.slug === slug)?.name;
+}
+
+/**
+ * An empty screen is an invitation to act, so it points at WhatsApp.
+ *
+ * `category` here is the shelf's NAME rather than its slug — the value lands
+ * in a sentence a shopper reads and in the message the shop owner receives.
+ */
 function EmptyResult({
   category,
   sizes,
   band,
+  shop,
   onClear,
 }: {
-  category: Category | null;
+  category: string | null;
   sizes: number[];
   band: PriceBandId | null;
+  shop: ShopContact;
   onClear: () => void;
 }) {
   const inSizes =
     sizes.length === 0 ? "" : sizes.length === 1 ? ` in size ${sizes[0]}` : ` in sizes ${sizes.join(" or ")}`;
-  const what = category ?? "pairs";
+  const what = category ? category.toLowerCase() : "pairs";
   const atPrice = band ? ` ${PRICE_BANDS.find((b) => b.id === band)?.label.toLowerCase()}` : "";
 
   return (
@@ -581,7 +637,7 @@ function EmptyResult({
       </p>
       <div className="text-caption mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 uppercase">
         <a
-          href={buildStockEnquiryLink({ sizes, category: category ?? undefined })}
+          href={buildStockEnquiryLink({ sizes, category: category ?? undefined, shop })}
           target="_blank"
           rel="noopener noreferrer"
           className="link-quiet text-ink"

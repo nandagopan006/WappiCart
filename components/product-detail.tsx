@@ -6,7 +6,8 @@ import { useState } from "react";
 import { OrderButton } from "@/components/order-button";
 import { Price } from "@/components/price";
 import { SizeRun } from "@/components/size-run";
-import type { Product } from "@/lib/products";
+import type { Product } from "@/lib/catalogue";
+import type { ShopContact } from "@/lib/whatsapp";
 
 /**
  * The product sheet. Photographs on the left, the decision on the right.
@@ -17,10 +18,18 @@ import type { Product } from "@/lib/products";
  */
 export function ProductDetail({
   product,
+  categoryLabel,
+  shop,
   headingLevel = "h1",
   imagePriority = false,
 }: {
   product: Product;
+  /* The shelf's name. Passed in rather than taken from `product.category`,
+     which is the slug — shelves are rows the admin names now, and a slug reads
+     as "running-shoes" above the product's own name. */
+  categoryLabel: string;
+  /* Only here to reach OrderButton — see the note there. */
+  shop: ShopContact;
   headingLevel?: "h1" | "h2";
   imagePriority?: boolean;
 }) {
@@ -50,7 +59,7 @@ export function ProductDetail({
       {/* Sticks beside the photographs on a wide screen, so the size run and
           the order button stay reachable however far the images run. */}
       <div className="lg:sticky lg:top-32 lg:self-start">
-        <p className="text-caption text-grey uppercase">{product.category}</p>
+        <p className="text-caption text-grey uppercase">{categoryLabel}</p>
         <Heading className="text-title text-ink mt-2 font-medium">{product.name}</Heading>
         <Price price={product.price} mrp={product.mrp} className="mt-3 block" />
 
@@ -69,7 +78,7 @@ export function ProductDetail({
           {product.fitNote ? <p className="text-body text-grey mt-3">{product.fitNote}</p> : null}
         </div>
 
-        <OrderButton product={product} size={size} className="mt-6" />
+        <OrderButton product={product} size={size} shop={shop} className="mt-6" />
 
         {/* The specifics sit below the button. Nothing here should delay the
             shopper who has already decided. */}

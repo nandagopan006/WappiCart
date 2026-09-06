@@ -392,6 +392,26 @@
     }
   }
 
+  /* ── The shelf strip's tiles ─────────────────────────────────
+     Width and aspect ratio both come from the tile's column span,
+     which AudienceGrid computes so the last row is always full.
+
+     Scaling the ratio with the span is what keeps every row the
+     same height: a tile spanning two columns is twice as wide and
+     gets twice as wide a ratio, so its height is unchanged. Without
+     that it would be twice as tall and the strip would step. */
+  .audience-tile {
+    grid-column: span var(--tile-span-sm) / span var(--tile-span-sm);
+    aspect-ratio: var(--tile-ratio-sm);
+  }
+
+  @media (min-width: 64rem) {
+    .audience-tile {
+      grid-column: span var(--tile-span-lg) / span var(--tile-span-lg);
+      aspect-ratio: var(--tile-ratio-lg);
+    }
+  }
+
   /* The arrow that resolves in beside an audience tile's name. It holds its
      space at rest, so nothing shifts when it appears. */
   .tile-arrow {

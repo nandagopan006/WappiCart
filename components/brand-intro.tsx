@@ -74,7 +74,7 @@ const KEY = "wappicart:intro:v1";
 /** Five rows of tiled wordmark behind the lockup. */
 const WALL_ROWS = [0, 1, 2, 3, 4];
 
-export function BrandIntro() {
+export function BrandIntro({ name = "WappiCart" }: { name?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const ruleRef = useRef<HTMLDivElement>(null);
@@ -375,7 +375,7 @@ export function BrandIntro() {
           >
             {Array.from({ length: 7 }, (_, copy) => (
               <span key={copy} className="px-[1.6vw]">
-                <Wordmark />
+                <Wordmark name={name} />
               </span>
             ))}
           </div>
@@ -389,7 +389,7 @@ export function BrandIntro() {
       />
 
       <div ref={markRef} className="brand-intro-mark text-ink relative will-change-transform">
-        <Wordmark />
+        <Wordmark name={name} />
       </div>
 
       <div

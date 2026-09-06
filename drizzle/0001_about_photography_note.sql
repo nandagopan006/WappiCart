@@ -1,0 +1,12 @@
+-- Rename `about_content.contact_info` to `photography_note`.
+--
+-- Written by hand rather than generated. drizzle-kit cannot tell a rename
+-- from a drop-plus-add without being asked interactively, and its default
+-- answer is to drop the column — which would discard the value rather than
+-- move it. ALTER ... RENAME keeps the data.
+--
+-- The column never held contact details. It renders the fourth fact in the
+-- About page's table, which is a note about photography, and a column whose
+-- name disagrees with its contents is a bug waiting for someone to trust the
+-- name.
+ALTER TABLE "about_content" RENAME COLUMN "contact_info" TO "photography_note";

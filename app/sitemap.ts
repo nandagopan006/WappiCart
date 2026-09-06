@@ -1,9 +1,14 @@
 import type { MetadataRoute } from "next";
 
-import { products } from "@/lib/products";
-import { shop } from "@/lib/shop";
+import { publishedProducts } from "@/lib/products";
+import { getShop } from "@/lib/shop";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  /* Published pairs only. A draft or an archived product in the sitemap is an
+     invitation for a crawler to index a 404. */
+  const shop = await getShop();
+  const products = await publishedProducts();
+
   return [
     { url: shop.url, changeFrequency: "weekly", priority: 1 },
     { url: `${shop.url}/shop`, changeFrequency: "weekly", priority: 0.9 },
