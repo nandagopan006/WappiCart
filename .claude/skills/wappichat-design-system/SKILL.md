@@ -323,20 +323,21 @@ a fifth means the system has drifted.
 ## Pages
 
 ```
-/            Nine numbered sections — full-bleed banner, New in, two category
+/            Eight numbered sections — full-bleed banner, New in, two category
              stories, the inverted product story, a collection spread, the
-             shelf tiles, the brand statement, six pairs, the order block
+             shelf tiles, the brand statement, the order block
 /shop        The whole shelf with filters, sorting and load-more
 /p/[slug]    Stacked photographs left, sticky decision column right
 /about       One portrait, four paragraphs, a table of facts
 /wishlist    Saved pairs, clear-all, and a recommendation rail
 ```
 
-The home page is a **sequence**, and its sections are numbered `01`–`09`
+The home page is a **sequence**, and its sections are numbered `01`–`08`
 because saying which part you are in is what stops a long scroll feeling
-shapeless. It shows six pairs near the end, not the whole catalogue: /shop has
-the filters and the pagination to handle a longer list properly, and a home
-page that reprints the shelf gives the shopper no reason to go there.
+shapeless. It never reprints the shelf: the only stock it lists outright is
+New in, and every other section shows pairs inside an editorial composition.
+/shop has the filters and the pagination to handle the full list properly, and
+a home page that grids the catalogue gives the shopper no reason to go there.
 
 The about page builds trust. It does not sell.
 
@@ -415,6 +416,71 @@ most attractive thing on screen.
 **Never install:** a UI kit, a carousel library, a fifth animation library, a
 state manager, an analytics SDK, or anything that ships more than 15kb for one
 feature.
+
+---
+
+## The database
+
+Postgres on Supabase, through Drizzle. `lib/db/schema.ts` is the only schema.
+
+**Two rules, both learned the hard way. Breaking either produces a symptom
+that does not look like its cause.**
+
+**1. Never fan out queries inside one request.** Supabase's transaction pooler
+multiplexes clients onto a few backends, and postgres.js pipelines concurrent
+queries down a single connection. A `Promise.all` of database reads gets that
+connection reset — `ECONNRESET` — rather than queued. In production it
+surfaces as a 500 on an unrelated-looking query; in development as a page that
+hangs for five minutes and *then* renders, with no error logged anywhere.
+Await reads in sequence. Every query in this app is under 200ms, so four in a
+row costs half a second. If a page ever needs to be faster, write fewer
+queries, not parallel ones.
+
+**2. `postgres` must stay in `serverExternalPackages`.** It opens raw sockets
+through `node:net`. Webpack bundles it without complaining and the result
+looks fine — the module loads, a client is constructed — and then every query
+hangs forever.
+
+Also non-negotiable in `lib/db/index.ts`: `prepare: false` (the pooler cannot
+prepare across pooled connections) and `idle_timeout` (without it the pool
+hands out sockets the pooler has already closed).
+
+**Reads are split by audience, and the split is a safety property.**
+`lib/products.ts` is the storefront's and filters everything to
+`status = 'published'`, so a draft cannot reach the shelf, the sitemap, a
+category count or an OG image. `lib/repositories/products.ts` is the admin's
+and sees everything. The storefront has no way to ask for a draft.
+
+The shelves follow the same rule. `getShelves()` returns only the enabled
+ones, so a shelf turned off in the admin cannot appear in the header, the
+shop's filter row or the home page's tiles; `listShelvesForEditing()` is the
+admin's and returns every shelf including the hidden ones. Both live in
+`lib/repositories/categories.ts`.
+
+**Shelves are rows, not a type.** They used to be a four-value union in
+`lib/catalogue.ts`, which is why adding one needed a deployment. `Category` is
+now just the slug string and the set is only knowable at runtime, so:
+
+- Nothing is `Record<Category, X>` over a known key set, and nothing validates
+  a slug with `z.enum`. Existence is enforced by the `category_slug` foreign
+  key, which is also what refuses to delete a shelf still carrying pairs —
+  drafts and archived ones included.
+- Client components take the shelves as a prop. They cannot import them:
+  `lib/repositories/categories.ts` is `server-only`.
+- A shelf's **slug is fixed once chosen**. It is the `?c=` value in every
+  header link and the thing every product points at. Rename the `name`, which
+  is what a shopper reads; the slug is the address.
+- A shelf has no page of its own, so deleting one breaks no link a shopper
+  holds — which is why it deletes outright while a product only archives.
+
+**No component imports `lib/products`.** Components take data as props; only
+routes read the database. `lib/products.ts` is `server-only`, and a component
+that is imported by a Client Component — even one without its own
+`'use client'` — is part of the client graph and will fail the build. The
+shared types and constants live in `lib/catalogue.ts`, which holds no data.
+
+---
+
 
 ---
 

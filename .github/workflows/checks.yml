@@ -1,0 +1,48 @@
+# Runs on every push and every pull request.
+#
+# WHAT THIS CATCHES
+#   - TypeScript errors
+#   - Any of the project's documented rules being broken
+#     (see scripts/check-rules.ts and CODE-GUIDE.md)
+#
+# WHAT IT DOES NOT CATCH
+#   The check:* suites that drive the real app — check:pages, check:lifecycle,
+#   check:edges — all need a running server and a live database. Pointing CI
+#   at the production database would mean every push writing test rows to the
+#   real shop, so they stay a local step. Run them before you deploy:
+#
+#     npm run typecheck && npm run check:rules
+#     npm run check:pages && npm run check:lifecycle && npm run check:edges
+#
+# If this project ever gets a separate test database, add its connection
+# string as a repository secret and the rest of the suite can move in here.
+
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` installs exactly what package-lock.json pins, and fails if the
+      # lockfile and package.json disagree. `npm install` would quietly fix it.
+      - name: Install
+        run: npm ci
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      # Reads the source only — no database, no network, no secrets.
+      - name: Project rules
+        run: npm run check:rules

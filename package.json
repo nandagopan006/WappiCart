@@ -6,22 +6,47 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/db-seed.ts",
+    "admin:create": "tsx scripts/admin-create.ts",
+    "db:verify": "tsx scripts/db-verify.ts",
+    "admin:list": "tsx scripts/admin-list.ts",
+    "check:whatsapp": "tsx scripts/check-whatsapp.ts",
+    "check:admin": "tsx scripts/check-admin-flow.ts",
+    "check:pages": "tsx scripts/check-admin-pages.ts",
+    "check:lifecycle": "tsx scripts/check-lifecycle.ts",
+    "admin:cleanup": "tsx scripts/admin-cleanup.ts",
+    "check:images": "tsx scripts/check-images.ts",
+    "check:speed": "tsx scripts/check-speed.ts",
+    "check:edges": "tsx scripts/check-edges.ts",
+    "check:rules": "tsx scripts/check-rules.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.112.4",
+    "drizzle-orm": "^0.45.2",
     "gsap": "^3.15.0",
     "lenis": "^1.3.26",
     "motion": "^13.1.0",
     "next": "^15.5.4",
+    "postgres": "^3.4.9",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",
     "@types/node": "^22.18.8",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
+    "drizzle-kit": "^0.31.10",
     "tailwindcss": "^4.1.14",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3"
   }
 }

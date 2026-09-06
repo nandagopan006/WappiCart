@@ -5,7 +5,7 @@ import { ImageReveal } from "@/components/image-reveal";
 import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
 import { cx } from "@/lib/cx";
-import { formatPrice, type Category, type Product } from "@/lib/products";
+import { formatPrice, type Category, type Product } from "@/lib/catalogue";
 
 /**
  * A shelf introduced properly, rather than as a card with a label on it.
@@ -25,6 +25,7 @@ import { formatPrice, type Category, type Product } from "@/lib/products";
  */
 export function CategoryStory({
   category,
+  label,
   lead,
   support,
   count,
@@ -32,7 +33,10 @@ export function CategoryStory({
   index,
   side = "left",
 }: {
+  /** The shelf's slug. Only ever used to build the link. */
   category: Category;
+  /** The shelf's name, which is what a shopper reads. */
+  label: string;
   /** Place in the home page's sequence. Rendered as 01, 02, … */
   index: number;
   /** The pair that carries the section. */
@@ -90,7 +94,7 @@ export function CategoryStory({
           <ScrollReveal className="mt-5">
             <Link href={href} className="group block focus-visible:outline-offset-4">
               <ProximityText as="h2" className="text-display text-ink font-light uppercase">
-                {category}
+                {label}
               </ProximityText>
             </Link>
 

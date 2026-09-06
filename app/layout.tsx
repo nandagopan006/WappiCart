@@ -1,53 +1,40 @@
-import type { Metadata, Viewport } from "next";
+import type { Viewport } from "next";
 import { Jost } from "next/font/google";
 import type { ReactNode } from "react";
 
-import { BrandIntro } from "@/components/brand-intro";
-import { MobileNav } from "@/components/mobile-nav";
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
-import { SmoothScroll } from "@/components/smooth-scroll";
 import { palette } from "@/lib/palette";
-import { shop } from "@/lib/shop";
 
 import "./globals.css";
 
-/* One family, latin only. A retail catalogue is led by its photographs — a
-   second display face would only compete with them.
+/**
+ * The document.
+ *
+ * ── Why this holds so little ─────────────────────────────────────────────
+ * It used to hold the storefront's whole chrome — header, footer, mobile
+ * dock, smooth scroll, the brand intro — because the storefront was the only
+ * thing in the app. The admin panel is not a shop and must not be wrapped in
+ * one: an editor does not need Lenis interpolating their scroll through a
+ * table, and a sticky shop header over a product form is furniture in the way
+ * of the work.
+ *
+ * So everything that makes a page feel like the shop moved down into
+ * `app/(storefront)/layout.tsx`, and what is left here is what genuinely
+ * belongs to the document: the html and body elements, the font, the
+ * stylesheet, and the script that has to run before first paint.
+ *
+ * Both sides share the font on purpose. A second family loaded for the admin
+ * would be a second download and a second thing to keep in step, and Jost is
+ * a perfectly good interface face — the admin should feel like WappiCart even
+ * while it looks nothing like the shop.
+ */
 
-   Loaded as a VARIABLE font: naming no `weight` makes next/font ship Jost's
-   variable cut with its whole 100–900 axis, instead of three fixed instances.
-   That is what lets the hero headline interpolate its weight under the cursor
-   — with static 300/400/500 faces the browser can only snap between the three,
-   and a weight animation reads as three hard steps. Every `font-light`,
-   `font-normal` and `font-medium` on the site resolves to the same value it
-   did before; one file replaces three, so this is also slightly less to
-   download. */
+/* Variable cut, 100–900. Naming a `weight` would ship fixed instances and
+   break ProximityText, which interpolates weight under the cursor. */
 const jost = Jost({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-jost",
 });
-
-export const metadata: Metadata = {
-  metadataBase: new URL(shop.url),
-  title: {
-    default: `${shop.name} — ${shop.tagline}`,
-    template: `%s · ${shop.name}`,
-  },
-  description:
-    "A small shoe shop. Browse the pairs here, order the one you want on WhatsApp. No cart, no checkout form, no account.",
-  alternates: { canonical: "/" },
-  openGraph: {
-    type: "website",
-    siteName: shop.name,
-    title: `${shop.name} — ${shop.tagline}`,
-    description: "Browse the pairs here, order on WhatsApp.",
-    url: shop.url,
-  },
-  twitter: { card: "summary_large_image" },
-  robots: { index: true, follow: true },
-};
 
 export const viewport: Viewport = {
   /* Browser chrome cannot read a CSS token, so this comes from the one module
@@ -91,24 +78,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-paper text-ink font-sans">
-        <a
-          href="#main"
-          className="bg-ink text-paper sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2"
-        >
-          Skip to the shoes
-        </a>
-        {/* First visit only. Lives in the layout so it cannot replay when the
-            shopper moves between routes — the layout never remounts. */}
-        <BrandIntro />
-        <SmoothScroll />
-        <SiteHeader />
-        <main id="main">{children}</main>
-        <SiteFooter />
-        {/* Last in the document so its spacer lands below the footer, and so
-            the fixed bar sits above everything without a z-index race. */}
-        <MobileNav />
-      </body>
+      <body className="bg-paper text-ink font-sans">{children}</body>
     </html>
   );
 }

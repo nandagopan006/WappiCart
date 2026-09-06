@@ -1,6 +1,6 @@
 "use client";
 
-import { SIZE_RUN } from "@/lib/products";
+import { SIZE_RUN } from "@/lib/catalogue";
 import { cx } from "@/lib/cx";
 
 /**

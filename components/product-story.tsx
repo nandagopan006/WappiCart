@@ -5,7 +5,7 @@ import { ImageReveal } from "@/components/image-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { formatPrice, type Product } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/catalogue";
 
 /**
  * The dark passage. One pair, on near-black.

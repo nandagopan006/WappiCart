@@ -1,5 +1,5 @@
 import { cx } from "@/lib/cx";
-import { formatPrice } from "@/lib/products";
+import { formatPrice } from "@/lib/catalogue";
 
 /**
  * The price, wherever it appears.

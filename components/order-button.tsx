@@ -1,8 +1,8 @@
 "use client";
 
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
-import type { Product } from "@/lib/products";
-import { buildOrderLink } from "@/lib/whatsapp";
+import type { Product } from "@/lib/catalogue";
+import { buildOrderLink, type ShopContact } from "@/lib/whatsapp";
 import { cx } from "@/lib/cx";
 
 /**
@@ -15,10 +15,16 @@ import { cx } from "@/lib/cx";
 export function OrderButton({
   product,
   size,
+  shop,
   className,
 }: {
   product: Product;
   size: number | null;
+  /* Passed down rather than imported: this is a Client Component and the
+     shop's phone number now lives in the database. `buildOrderLink` has no
+     fallback on purpose — a placeholder number that silently swallows orders
+     is worse than a type error. */
+  shop: ShopContact;
   className?: string;
 }) {
   /* A square-cornered block, ink on paper. The border is always present so the
@@ -40,7 +46,7 @@ export function OrderButton({
 
   return (
     <a
-      href={buildOrderLink({ product, size })}
+      href={buildOrderLink({ product, size, shop })}
       target="_blank"
       rel="noopener noreferrer"
       className={cx(base, "border-ink bg-ink text-paper hover:bg-paper hover:text-ink", className)}

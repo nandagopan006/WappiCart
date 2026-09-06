@@ -7,7 +7,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ProductGrid } from "@/components/product-grid";
 import { RecommendationRail } from "@/components/recommendation-rail";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { relatedProducts, type Product } from "@/lib/products";
+import { relatedFrom, type Product } from "@/lib/catalogue";
 import { clearWishlist, useWishlist } from "@/lib/wishlist";
 
 /**
@@ -78,7 +78,7 @@ export function WishlistGrid({ products }: { products: Product[] }) {
     };
 
     for (const product of items) {
-      for (const related of relatedProducts(product, Number.MAX_SAFE_INTEGER)) {
+      for (const related of relatedFrom(products, product, Number.MAX_SAFE_INTEGER)) {
         if (picked.length >= RECOMMENDATION_LIMIT) break;
         take(related);
       }

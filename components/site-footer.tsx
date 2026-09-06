@@ -1,5 +1,5 @@
 import { WhatsappGlyph } from "@/components/whatsapp-glyph";
-import { shop } from "@/lib/shop";
+import { getShop } from "@/lib/shop";
 import { buildChatLink } from "@/lib/whatsapp";
 
 /**
@@ -23,7 +23,9 @@ import { buildChatLink } from "@/lib/whatsapp";
  *
  * No newsletter signup. You have WhatsApp — that is your list.
  */
-export function SiteFooter() {
+export async function SiteFooter() {
+  const shop = await getShop();
+
   return (
     <footer className="border-line bg-mist mt-section border-t">
       <div className="max-w-page mx-auto px-4 py-10 md:px-8 md:py-16">
@@ -31,7 +33,7 @@ export function SiteFooter() {
           <div className="col-span-2 lg:col-span-1">
             <p className="text-caption text-ink mb-2 uppercase">Order</p>
             <a
-              href={buildChatLink()}
+              href={buildChatLink(shop)}
               target="_blank"
               rel="noopener noreferrer"
               className="link-quiet text-body text-ink inline-flex items-center gap-2"

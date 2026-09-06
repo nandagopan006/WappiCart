@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import type { Product } from "@/lib/products";
+import type { Product } from "@/lib/catalogue";
 
 /**
  * A pale full-width band with a pair standing at each end and a line of copy

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ImageReveal } from "@/components/image-reveal";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { formatPrice, type Product } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/catalogue";
 
 /**
  * Three pairs under one line of type.

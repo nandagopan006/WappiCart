@@ -1,0 +1,354 @@
+/* ─────────────────────────────────────────────────────────────
+   The admin's visual language.
+
+   Imported only by app/admin/layout.tsx, so nothing here can
+   reach the storefront. Every class is prefixed `a-` for the
+   same reason — a rule named `.card` would eventually collide
+   with something in globals.css and the collision would show up
+   on a product page, not here.
+
+   It borrows the storefront's tokens — same paper, ink, grey,
+   line, same Jost — because the admin should feel like
+   WappiCart. It does not borrow the storefront's LAYOUT rules.
+   A catalogue is a grid of photographs read by scanning; an
+   admin is tables and forms read by looking things up. Density,
+   alignment and hierarchy here answer to that, not to the
+   one-rule-of-the-grid.
+
+   What it keeps from the storefront on purpose:
+     · square corners, no rounded controls
+     · hairlines in --color-line, never black at an opacity
+     · ink-on-paper buttons, no third colour
+     · uppercase tracked labels, sentence-case prose
+     · a visible focus ring on everything reachable
+   ───────────────────────────────────────────────────────────── */
+
+@layer components {
+  /* ── Shell ─────────────────────────────────────────────── */
+
+  .a-shell {
+    display: grid;
+    min-height: 100vh;
+    min-height: 100dvh;
+    grid-template-columns: 1fr;
+    background-color: var(--color-paper);
+  }
+
+  @media (min-width: 1024px) {
+    .a-shell {
+      grid-template-columns: 240px 1fr;
+    }
+  }
+
+  .a-sidebar {
+    border-right: 1px solid var(--color-line);
+    background-color: var(--color-paper);
+  }
+
+  /* The drawer on a phone. Off-canvas rather than a squeezed
+     column: at 360px a 240px rail leaves 120px for the work. */
+  @media (max-width: 1023px) {
+    .a-sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform 260ms var(--ease-settle);
+      box-shadow: 0 0 40px color-mix(in srgb, var(--color-ink) 12%, transparent);
+    }
+
+    .a-sidebar[data-open="true"] {
+      transform: none;
+    }
+  }
+
+  .a-nav-group {
+    padding: 0 12px;
+    margin-top: 24px;
+  }
+
+  .a-nav-heading {
+    padding: 0 12px 8px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  .a-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    /* 36px tall: dense enough for a twelve-item rail, still a
+       comfortable target with a mouse. The phone drawer gets
+       more, below. */
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: var(--color-grey);
+    transition: color 140ms var(--ease-settle), background-color 140ms var(--ease-settle);
+  }
+
+  @media (max-width: 1023px) {
+    .a-nav-link {
+      min-height: 44px;
+    }
+  }
+
+  .a-nav-link:hover {
+    color: var(--color-ink);
+    background-color: var(--color-mist);
+  }
+
+  .a-nav-link[aria-current="page"] {
+    color: var(--color-ink);
+    background-color: var(--color-mist);
+    /* The marker is a rule on the leading edge rather than a
+       fill, so the active row reads as selected without
+       becoming the loudest thing on the page. */
+    box-shadow: inset 2px 0 0 var(--color-ink);
+  }
+
+  /* ── Surfaces ──────────────────────────────────────────── */
+
+  .a-card {
+    border: 1px solid var(--color-line);
+    background-color: var(--color-paper);
+  }
+
+  .a-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--color-line);
+    padding: 14px 16px;
+  }
+
+  .a-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+  }
+
+  /* ── Controls ──────────────────────────────────────────── */
+
+  .a-input,
+  .a-textarea,
+  .a-select {
+    width: 100%;
+    border: 1px solid var(--color-line);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-size: 14px;
+    padding: 9px 11px;
+    transition: border-color 140ms var(--ease-settle);
+  }
+
+  .a-input:hover,
+  .a-textarea:hover,
+  .a-select:hover {
+    border-color: color-mix(in srgb, var(--color-ink) 30%, var(--color-line));
+  }
+
+  .a-input:focus-visible,
+  .a-textarea:focus-visible,
+  .a-select:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: -1px;
+    border-color: var(--color-ink);
+  }
+
+  .a-input::placeholder,
+  .a-textarea::placeholder {
+    color: color-mix(in srgb, var(--color-grey) 70%, transparent);
+  }
+
+  /* An invalid field is marked by a rule AND a message, never by
+     colour alone — the same reason status badges carry a word. */
+  .a-input[aria-invalid="true"],
+  .a-textarea[aria-invalid="true"],
+  .a-select[aria-invalid="true"] {
+    border-color: var(--color-love);
+    box-shadow: inset 2px 0 0 var(--color-love);
+  }
+
+  .a-error {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-love);
+  }
+
+  .a-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--color-grey);
+  }
+
+  .a-textarea {
+    min-height: 96px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+
+  /* ── Buttons ───────────────────────────────────────────── */
+
+  .a-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 16px;
+    border: 1px solid var(--color-ink);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      background-color 140ms var(--ease-settle),
+      color 140ms var(--ease-settle),
+      border-color 140ms var(--ease-settle);
+  }
+
+  .a-btn:focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  .a-btn[data-variant="primary"] {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  .a-btn[data-variant="primary"]:hover:not(:disabled) {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .a-btn[data-variant="secondary"] {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+  }
+
+  .a-btn[data-variant="secondary"]:hover:not(:disabled) {
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  /* Destructive is the PLAIN one. It should never be the most
+     attractive thing on screen — the same rule the storefront's
+     confirm dialog follows. */
+  .a-btn[data-variant="danger"] {
+    background-color: var(--color-paper);
+    color: var(--color-love);
+    border-color: color-mix(in srgb, var(--color-love) 45%, var(--color-line));
+  }
+
+  .a-btn[data-variant="danger"]:hover:not(:disabled) {
+    border-color: var(--color-love);
+    background-color: color-mix(in srgb, var(--color-love) 6%, var(--color-paper));
+  }
+
+  .a-btn[data-variant="quiet"] {
+    height: 30px;
+    padding: 0 10px;
+    border-color: transparent;
+    background-color: transparent;
+    color: var(--color-grey);
+  }
+
+  .a-btn[data-variant="quiet"]:hover:not(:disabled) {
+    color: var(--color-ink);
+    background-color: var(--color-mist);
+  }
+
+  .a-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  /* ── Table ─────────────────────────────────────────────── */
+
+  .a-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .a-table th {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-line);
+    text-align: left;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-grey);
+    white-space: nowrap;
+  }
+
+  .a-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+
+  .a-table tbody tr:hover {
+    background-color: var(--color-mist);
+  }
+
+  /* ── Status badge ──────────────────────────────────────── */
+
+  /* Every badge carries its word. Status is never communicated by
+     colour alone — the shape differs too, so it survives both a
+     greyscale screen and a colour-blind reader. */
+  .a-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border: 1px solid var(--color-line);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .a-badge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    background-color: currentColor;
+  }
+
+  .a-badge[data-tone="published"] {
+    color: var(--color-ink);
+    border-color: color-mix(in srgb, var(--color-ink) 30%, var(--color-line));
+  }
+
+  .a-badge[data-tone="draft"] {
+    color: var(--color-grey);
+  }
+
+  /* A hollow marker for archived: present, but no longer live. */
+  .a-badge[data-tone="archived"] {
+    color: var(--color-grey);
+    border-style: dashed;
+  }
+
+  .a-badge[data-tone="archived"]::before {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+
+  .a-badge[data-tone="attention"] {
+    color: var(--color-love);
+    border-color: color-mix(in srgb, var(--color-love) 40%, var(--color-line));
+  }
+}

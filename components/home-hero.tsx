@@ -5,7 +5,7 @@ import { ImageReveal } from "@/components/image-reveal";
 import { Magnetic } from "@/components/magnetic";
 import { ProximityText } from "@/components/proximity-text";
 import { ScrollReveal } from "@/components/scroll-reveal";
-import { formatPrice, pairsInStock, products, type Product } from "@/lib/products";
+import { formatPrice, type Product } from "@/lib/catalogue";
 
 /**
  * The opening. One pair, full screen, then the line that explains it.
@@ -24,8 +24,19 @@ import { formatPrice, pairsInStock, products, type Product } from "@/lib/product
  * positioned over the photograph — the banner is full screen because it is
  * the only thing on screen, not because type is layered onto it.
  */
-export function HomeHero({ product }: { product: Product }) {
-  const lead = product ?? products[0];
+/* Counts arrive as props rather than being read here: this component renders
+   inside the home page, which has already loaded the catalogue, and a second
+   read for two numbers would be a second query on every render. */
+export function HomeHero({
+  product,
+  styleCount,
+  pairCount,
+}: {
+  product: Product;
+  styleCount: number;
+  pairCount: number;
+}) {
+  const lead = product;
 
   return (
     <section className="border-line border-b">
@@ -42,8 +53,8 @@ export function HomeHero({ product }: { product: Product }) {
             Autumn shelf<span className="hidden sm:inline"> — Kerala</span>
           </span>
           <span className="shrink-0 tabular-nums">
-            {products.length} styles
-            <span className="hidden sm:inline"> / {pairsInStock()} pairs</span>
+            {styleCount} styles
+            <span className="hidden sm:inline"> / {pairCount} pairs</span>
           </span>
         </ScrollReveal>
       </div>
